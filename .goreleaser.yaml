@@ -1,0 +1,17 @@
+project_name: gh-dispatch
+before:
+  hooks:
+    - make test
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+      - netbsd
+archives:
+  - name_template: "{{ .Os }}-{{ .Arch }}"
+    format: binary
+snapshot:
+  name_template: "{{ .Version }}-next"

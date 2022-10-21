@@ -1,0 +1,47 @@
+SOURCE=./...
+GOFMT_FILES?=$$(find . -type f -name '*.go')
+VERSION?=0.0.0
+
+default: build
+
+tools:
+	go install github.com/goreleaser/goreleaser@v1.11.4
+.PHONY: tools
+
+build: tools
+	goreleaser release \
+		--snapshot \
+		--skip-publish \
+		--rm-dist
+.PHONY: build
+
+test: vet fmtcheck
+	go test -coverprofile=coverage.out -count=1 $(SOURCE)
+.PHONY: test
+
+vet:
+	go vet $(SOURCE)
+.PHONY: vet
+
+fmt:
+	gofmt -w $(GOFMT_FILES)
+.PHONY: fmt
+
+fmtcheck:
+	test -z $(shell go fmt $(SOURCE))
+.PHONY: fmtcheck
+
+tag:
+	echo "creating git tag $(VERSION)"
+	git tag $(VERSION)
+	git push origin $(VERSION)
+.PHONY: tag
+
+release: tools
+	goreleaser release \
+		--rm-dist
+.PHONY: release
+
+# TODO: dynamically set architecture, which is currently hard-coded to amd64
+install: build
+	cp dist/gh-dispatch_$(shell echo $(shell uname) | tr '[:upper:]' '[:lower:]')_amd64/gh-dispatch ~/.local/share/gh/extensions/gh-dispatch/
