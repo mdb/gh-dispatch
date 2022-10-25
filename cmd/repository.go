@@ -9,6 +9,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type repositoryDispatchOptions struct {
+	Repo          string
+	ClientPayload interface{}
+	EventType     string
+}
+
 type repositoryDispatchRequest struct {
 	EventType     string      `json:"event_type"`
 	ClientPayload interface{} `json:"client_payload"`
@@ -32,29 +38,36 @@ var repositoryCmd = &cobra.Command{
 		var repoClientPayload interface{}
 		json.Unmarshal(b, &repoClientPayload)
 
-		var buf bytes.Buffer
-		err := json.NewEncoder(&buf).Encode(repositoryDispatchRequest{
-			EventType: repositoryEventType,
-			// TODO: how to handle JSON of unknown structure?
+		return repositoryDispatchRun(&repositoryDispatchOptions{
 			ClientPayload: repoClientPayload,
+			EventType:     repositoryEventType,
+			Repo:          repo,
 		})
-		if err != nil {
-			return err
-		}
-
-		client, err := gh.RESTClient(nil)
-		if err != nil {
-			return err
-		}
-
-		// TODO: pass a real interface
-		err = client.Post(fmt.Sprintf("repos/%s/dispatches", repo), &buf, &repositoryDispatchRequest{})
-		if err != nil {
-			return err
-		}
-
-		return nil
 	},
+}
+
+func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(repositoryDispatchRequest{
+		EventType:     opts.EventType,
+		ClientPayload: opts.ClientPayload,
+	})
+	if err != nil {
+		return err
+	}
+
+	client, err := gh.RESTClient(nil)
+	if err != nil {
+		return err
+	}
+
+	// TODO: pass a real interface
+	err = client.Post(fmt.Sprintf("repos/%s/dispatches", opts.Repo), &buf, &repositoryDispatchRequest{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func init() {
