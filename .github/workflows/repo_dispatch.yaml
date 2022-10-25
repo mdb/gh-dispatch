@@ -1,0 +1,13 @@
+name: Hello
+
+on:
+  repository_dispatch:
+    types: ["hello"]
+
+jobs:
+  greet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: say-hello
+        run: echo "Hello, ${{ github.event.client_payload.name }}!"
