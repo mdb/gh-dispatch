@@ -6,6 +6,7 @@ require github.com/spf13/cobra v1.6.0
 
 require (
 	github.com/briandowns/spinner v1.18.1 // indirect
+	github.com/cli/cli v1.14.0 // indirect
 	github.com/cli/cli/v2 v2.18.1 // indirect
 	github.com/cli/go-gh v0.1.2 // indirect
 	github.com/cli/safeexec v1.0.0 // indirect

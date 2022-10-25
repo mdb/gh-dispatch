@@ -3,26 +3,31 @@ package cmd
 import (
 	"testing"
 
+	"github.com/cli/cli/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRepositoryDispatchRun(t *testing.T) {
 	tests := []struct {
-		name    string
-		opts    *repositoryDispatchOptions
-		wantErr bool
-		errMsg  string
-		wantOut string
+		name      string
+		opts      *repositoryDispatchOptions
+		httpStubs func(*httpmock.Registry)
+		wantErr   bool
+		errMsg    string
+		wantOut   string
 	}{
 		{
-			name: "repo does not exist",
+			name: "basic",
 			opts: &repositoryDispatchOptions{
-				Repo:      "owner/repo",
+				Repo:      "OWNER/REPO",
 				EventType: "hello",
 			},
-			wantErr: true,
-			errMsg:  "HTTP 404: Not Found (https://api.github.com/repos/owner/repo/dispatches)",
+			httpStubs: func(reg *httpmock.Registry) {
+				reg.Register(
+					httpmock.REST("POST", "repos/OWNER/REPO/dispatches"),
+					httpmock.StringResponse("{}"))
+			},
 			wantOut: "",
 		}}
 
@@ -31,6 +36,11 @@ func TestRepositoryDispatchRun(t *testing.T) {
 		ios.SetStdoutTTY(false)
 		ios.SetAlternateScreenBufferEnabled(false)
 		tt.opts.IO = ios
+
+		reg := &httpmock.Registry{}
+		tt.httpStubs(reg)
+
+		tt.opts.HTTPTransport = reg
 
 		t.Run(tt.name, func(t *testing.T) {
 			err := repositoryDispatchRun(tt.opts)
@@ -44,6 +54,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 			if got := stdout.String(); got != tt.wantOut {
 				t.Errorf("got stdout:\n%q\nwant:\n%q", got, tt.wantOut)
 			}
+			reg.Verify(t)
 		})
 	}
 }
