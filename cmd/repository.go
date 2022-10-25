@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/go-gh"
 	"github.com/spf13/cobra"
 )
@@ -13,6 +14,7 @@ type repositoryDispatchOptions struct {
 	Repo          string
 	ClientPayload interface{}
 	EventType     string
+	IO            *iostreams.IOStreams
 }
 
 type repositoryDispatchRequest struct {
