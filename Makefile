@@ -31,7 +31,10 @@ fmtcheck:
 	test -z $(shell go fmt $(SOURCE))
 .PHONY: fmtcheck
 
-tag:
+check-tag:
+	./scripts/ensure-unique-version.sh "$(VERSION)"
+
+tag: check-tag
 	echo "creating git tag $(VERSION)"
 	git tag $(VERSION)
 	git push origin $(VERSION)
