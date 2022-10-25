@@ -8,6 +8,6 @@ jobs:
   hello:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: say-hello
         run: echo "Hello, ${{ github.event.client_payload.name }}!"
