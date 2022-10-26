@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/go-gh"
+	"github.com/cli/go-gh/pkg/api"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +17,8 @@ type repositoryDispatchOptions struct {
 	ClientPayload interface{}
 	EventType     string
 	IO            *iostreams.IOStreams
+	HTTPTransport http.RoundTripper
+	AuthToken     string
 }
 
 type repositoryDispatchRequest struct {
@@ -44,6 +48,7 @@ var repositoryCmd = &cobra.Command{
 			ClientPayload: repoClientPayload,
 			EventType:     repositoryEventType,
 			Repo:          repo,
+			HTTPTransport: http.DefaultTransport,
 		})
 	},
 }
@@ -58,7 +63,10 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	client, err := gh.RESTClient(nil)
+	client, err := gh.RESTClient(&api.ClientOptions{
+		Transport: opts.HTTPTransport,
+		AuthToken: opts.AuthToken,
+	})
 	if err != nil {
 		return err
 	}
