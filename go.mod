@@ -2,13 +2,16 @@ module github.com/mdb/gh-dispatch
 
 go 1.19
 
-require github.com/spf13/cobra v1.6.0
+require (
+	github.com/cli/cli v1.14.0
+	github.com/cli/cli/v2 v2.18.1
+	github.com/cli/go-gh v0.1.2
+	github.com/spf13/cobra v1.6.0
+	github.com/stretchr/testify v1.8.1
+)
 
 require (
 	github.com/briandowns/spinner v1.18.1 // indirect
-	github.com/cli/cli v1.14.0 // indirect
-	github.com/cli/cli/v2 v2.18.1 // indirect
-	github.com/cli/go-gh v0.1.2 // indirect
 	github.com/cli/safeexec v1.0.0 // indirect
 	github.com/cli/shurcooL-graphql v0.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -25,7 +28,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/thlib/go-timezone-local v0.0.0-20210907160436-ef149e42d28e // indirect
 	golang.org/x/net v0.0.0-20220923203811-8be639271d50 // indirect
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
