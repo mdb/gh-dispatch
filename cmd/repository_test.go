@@ -32,14 +32,14 @@ func TestRepositoryDispatchRun(t *testing.T) {
 		}}
 
 	for _, tt := range tests {
-		ios, _, stdout, _ := iostreams.Test()
-		ios.SetStdoutTTY(false)
-		ios.SetAlternateScreenBufferEnabled(false)
-		tt.opts.IO = ios
-
 		reg := &httpmock.Registry{}
 		tt.httpStubs(reg)
 
+		ios, _, stdout, _ := iostreams.Test()
+		ios.SetStdoutTTY(false)
+		ios.SetAlternateScreenBufferEnabled(false)
+
+		tt.opts.IO = ios
 		tt.opts.HTTPTransport = reg
 		tt.opts.AuthToken = "123"
 
