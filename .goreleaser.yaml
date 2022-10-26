@@ -1,7 +1,6 @@
 project_name: gh-dispatch
 before:
   hooks:
-    - go test -v -coverprofile=coverage.out -count=1 ./...
     - make test
 builds:
   - env:
