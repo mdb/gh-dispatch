@@ -29,6 +29,20 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.StringResponse("{}"))
 			},
 			wantOut: "",
+		}, {
+			name: "malformed JSON response",
+			opts: &repositoryDispatchOptions{
+				Repo:      "OWNER/REPO",
+				EventType: "hello",
+			},
+			httpStubs: func(reg *httpmock.Registry) {
+				reg.Register(
+					httpmock.REST("POST", "repos/OWNER/REPO/dispatches"),
+					httpmock.StringResponse("{"))
+			},
+			wantOut: "",
+			wantErr: true,
+			errMsg:  "unexpected end of JSON input",
 		}}
 
 	for _, tt := range tests {
