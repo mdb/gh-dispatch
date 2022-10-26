@@ -16,7 +16,7 @@ build: tools
 .PHONY: build
 
 test: vet fmtcheck
-	go test -coverprofile=coverage.out -count=1 $(SOURCE)
+	go test -v -coverprofile=coverage.out -count=1 $(SOURCE)
 .PHONY: test
 
 vet:
