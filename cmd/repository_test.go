@@ -41,6 +41,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 		tt.httpStubs(reg)
 
 		tt.opts.HTTPTransport = reg
+		tt.opts.AuthToken = "123"
 
 		t.Run(tt.name, func(t *testing.T) {
 			err := repositoryDispatchRun(tt.opts)

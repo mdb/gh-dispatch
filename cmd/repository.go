@@ -18,6 +18,7 @@ type repositoryDispatchOptions struct {
 	EventType     string
 	IO            *iostreams.IOStreams
 	HTTPTransport http.RoundTripper
+	AuthToken     string
 }
 
 type repositoryDispatchRequest struct {
@@ -64,6 +65,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 
 	client, err := gh.RESTClient(&api.ClientOptions{
 		Transport: opts.HTTPTransport,
+		AuthToken: opts.AuthToken,
 	})
 	if err != nil {
 		return err
