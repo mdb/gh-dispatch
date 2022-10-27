@@ -71,8 +71,8 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	// TODO: pass a real interface
-	err = client.Post(fmt.Sprintf("repos/%s/dispatches", opts.Repo), &buf, &repositoryDispatchRequest{})
+	var in interface{}
+	err = client.Post(fmt.Sprintf("repos/%s/dispatches", opts.Repo), &buf, &in)
 	if err != nil {
 		return err
 	}
