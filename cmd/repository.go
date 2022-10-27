@@ -62,12 +62,15 @@ var repositoryCmd = &cobra.Command{
 		var repoClientPayload interface{}
 		json.Unmarshal(b, &repoClientPayload)
 
+		ios := iostreams.System()
+
 		return repositoryDispatchRun(&repositoryDispatchOptions{
 			ClientPayload: repoClientPayload,
 			EventType:     repositoryEventType,
 			Workflow:      repositoryWorkflow,
 			Repo:          repo,
 			HTTPTransport: http.DefaultTransport,
+			IO:            ios,
 		})
 	},
 }
