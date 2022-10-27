@@ -64,6 +64,8 @@ var repositoryCmd = &cobra.Command{
 
 		ios := iostreams.System()
 
+		fmt.Println(repositoryWorkflow)
+
 		return repositoryDispatchRun(&repositoryDispatchOptions{
 			ClientPayload: repoClientPayload,
 			EventType:     repositoryEventType,
@@ -103,8 +105,17 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return nil
 	}
 
+	// TODO: is there a more accurate way to fetch the workflow run without sleeping?
+	// See https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-repository
+	sleep, err := time.ParseDuration("5s")
+	if err != nil {
+		return fmt.Errorf("could not parse interval: %w", err)
+	}
+	time.Sleep(sleep)
+
 	var wRuns workflowRunsResponse
-	err = client.Get(fmt.Sprintf("repos/%s/actions/runs?name=%s&event_type=repository_dispatch", opts.Repo, opts.Workflow), &wRuns)
+	path := fmt.Sprintf("repos/%s/actions/runs?name=%s&event=repository_dispatch", opts.Repo, opts.Workflow)
+	err = client.Get(path, &wRuns)
 	if err != nil {
 		return err
 	}
@@ -117,6 +128,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 
 	cs := opts.IO.ColorScheme()
 	if run.Status == shared.Completed {
+		// TODO: render run, even if it's completed
 		fmt.Fprintf(opts.IO.Out, "Run %s (%s) has already completed with '%s'\n", cs.Bold(run.WorkflowName()), cs.Cyanf("%d", run.ID), run.Conclusion)
 		if run.Conclusion != shared.Success {
 			return cmdutil.SilentError
