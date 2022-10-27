@@ -168,9 +168,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 func renderRun(out io.Writer, opts repositoryDispatchOptions, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
 	cs := opts.IO.ColorScheme()
 
-	var err error
-
-	run, err = getRun(client, repo, run.ID)
+	run, err := getRun(client, repo, run.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get run: %w", err)
 	}
@@ -181,7 +179,6 @@ func renderRun(out io.Writer, opts repositoryDispatchOptions, client api.RESTCli
 	}
 
 	var annotations []shared.Annotation
-
 	var annotationErr error
 	var as []shared.Annotation
 	for _, job := range jobs {
@@ -212,7 +209,6 @@ func renderRun(out io.Writer, opts repositoryDispatchOptions, client api.RESTCli
 	}
 
 	fmt.Fprintln(out, cs.Bold("JOBS"))
-
 	fmt.Fprintln(out, shared.RenderJobs(cs, jobs, true))
 
 	if len(annotations) > 0 {
@@ -230,16 +226,6 @@ func getRun(client api.RESTClient, repo string, runID int64) (*shared.Run, error
 	if err != nil {
 		return nil, err
 	}
-
-	// Set name to workflow name
-	/*
-		workflow, err := workflowShared.GetWorkflow(client, repo, result.WorkflowID)
-		if err != nil {
-			return nil, err
-		} else {
-			result.WorkflowName = workflow.Name
-		}
-	*/
 
 	return &result, nil
 }
