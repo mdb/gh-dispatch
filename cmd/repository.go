@@ -16,6 +16,7 @@ type repositoryDispatchOptions struct {
 	Repo          string
 	ClientPayload interface{}
 	EventType     string
+	Workflow      string
 	IO            *iostreams.IOStreams
 	HTTPTransport http.RoundTripper
 	AuthToken     string
@@ -26,9 +27,22 @@ type repositoryDispatchRequest struct {
 	ClientPayload interface{} `json:"client_payload"`
 }
 
+type workflowRun struct {
+	ID         int    `json:"id"`
+	WorkflowID int    `json:"workflow_id"`
+	Name       string `json:"name"`
+	Status     string `json:"status"`
+	Conclusion string `json:"conclusion"`
+}
+
+type workflowRunsResponse struct {
+	WorkflowRuns []workflowRun `json:"workflow_runs"`
+}
+
 var (
 	repositoryEventType     string
 	repositoryClientPayload string
+	repositoryWorkflow      string
 )
 
 // repositoryCmd represents the repository subcommand
@@ -47,6 +61,7 @@ var repositoryCmd = &cobra.Command{
 		return repositoryDispatchRun(&repositoryDispatchOptions{
 			ClientPayload: repoClientPayload,
 			EventType:     repositoryEventType,
+			Workflow:      repositoryWorkflow,
 			Repo:          repo,
 			HTTPTransport: http.DefaultTransport,
 		})
@@ -77,6 +92,25 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
+	if opts.Workflow == "" {
+		return nil
+	}
+
+	var wRuns workflowRunsResponse
+	err = client.Get(fmt.Sprintf("repos/%s/actions/runs?name=%s&event_type=repository_dispatch", opts.Repo, opts.Workflow), &wRuns)
+	if err != nil {
+		return err
+	}
+
+	id := wRuns.WorkflowRuns[0].ID
+	var wRun workflowRun
+	err = client.Get(fmt.Sprintf("repos/%s/actions/runs/%d/attempts/1", opts.Repo, id), &wRun)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(wRun)
+
 	return nil
 }
 
@@ -85,6 +119,7 @@ func init() {
 	repositoryCmd.MarkFlagRequired("event-type")
 	repositoryCmd.Flags().StringVarP(&repositoryClientPayload, "client-payload", "p", "", "The repository dispatch event client payload JSON string.")
 	repositoryCmd.MarkFlagRequired("client-payload")
+	repositoryCmd.Flags().StringVarP(&repositoryWorkflow, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
 
 	rootCmd.AddCommand(repositoryCmd)
 }
