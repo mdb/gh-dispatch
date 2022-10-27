@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
-	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
@@ -63,8 +62,6 @@ var repositoryCmd = &cobra.Command{
 		json.Unmarshal(b, &repoClientPayload)
 
 		ios := iostreams.System()
-
-		fmt.Println(repositoryWorkflow)
 
 		return repositoryDispatchRun(&repositoryDispatchOptions{
 			ClientPayload: repoClientPayload,
@@ -127,15 +124,6 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	}
 
 	cs := opts.IO.ColorScheme()
-	if run.Status == shared.Completed {
-		// TODO: render run, even if it's completed
-		fmt.Fprintf(opts.IO.Out, "Run %s (%s) has already completed with '%s'\n", cs.Bold(run.WorkflowName()), cs.Cyanf("%d", run.ID), run.Conclusion)
-		if run.Conclusion != shared.Success {
-			return cmdutil.SilentError
-		}
-		return nil
-	}
-
 	annotationCache := map[int64][]shared.Annotation{}
 	out := &bytes.Buffer{}
 	opts.IO.StartAlternateScreenBuffer()
@@ -155,6 +143,8 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 
 		interval := 3
 		fmt.Fprintln(opts.IO.Out, cs.Boldf("Refreshing run status every %d seconds. Press Ctrl+C to quit.", interval))
+		fmt.Fprintln(opts.IO.Out)
+		fmt.Fprintln(opts.IO.Out, cs.Boldf("https://github.com/%s/actions/runs/%d", opts.Repo, runID))
 		fmt.Fprintln(opts.IO.Out)
 
 		_, err = io.Copy(opts.IO.Out, out)
