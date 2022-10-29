@@ -128,7 +128,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		// Write to a temporary buffer to reduce total number of fetches
 		run, err = renderRun(out, *opts, client, opts.Repo, run, annotationCache)
 		if err != nil {
-			break
+			return err
 		}
 
 		if run.Status == shared.Completed {
