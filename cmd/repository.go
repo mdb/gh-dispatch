@@ -31,11 +31,11 @@ type repositoryDispatchRequest struct {
 }
 
 type workflowRun struct {
-	ID         int64  `json:"id"`
-	WorkflowID int    `json:"workflow_id"`
-	Name       string `json:"name"`
-	Status     string `json:"status"`
-	Conclusion string `json:"conclusion"`
+	ID         int64         `json:"id"`
+	WorkflowID int           `json:"workflow_id"`
+	Name       string        `json:"name"`
+	Status     shared.Status `json:"status"`
+	Conclusion string        `json:"conclusion"`
 }
 
 type workflowRunsResponse struct {
@@ -101,14 +101,6 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	if opts.Workflow == "" {
 		return nil
 	}
-
-	// TODO: is there a more accurate way to fetch the workflow run without sleeping?
-	// See https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-repository
-	sleep, err := time.ParseDuration("5s")
-	if err != nil {
-		return fmt.Errorf("could not parse interval: %w", err)
-	}
-	time.Sleep(sleep)
 
 	runID, err := getRunID(client, opts.Repo, opts.Workflow)
 	if err != nil {
@@ -219,13 +211,17 @@ func renderRun(out io.Writer, opts repositoryDispatchOptions, client api.RESTCli
 }
 
 func getRunID(client api.RESTClient, repo, workflow string) (int64, error) {
-	var wRuns workflowRunsResponse
-	err := client.Get(fmt.Sprintf("repos/%s/actions/runs?name=%s&event=repository_dispatch", repo, workflow), &wRuns)
-	if err != nil {
-		return 0, err
-	}
+	for {
+		var wRuns workflowRunsResponse
+		err := client.Get(fmt.Sprintf("repos/%s/actions/runs?name=%s&event=repository_dispatch", repo, workflow), &wRuns)
+		if err != nil {
+			return 0, err
+		}
 
-	return wRuns.WorkflowRuns[0].ID, nil
+		if wRuns.WorkflowRuns[0].Status != shared.Completed {
+			return wRuns.WorkflowRuns[0].ID, nil
+		}
+	}
 }
 
 func getRun(client api.RESTClient, repo string, runID int64) (*shared.Run, error) {
