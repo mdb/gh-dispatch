@@ -110,14 +110,11 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	}
 	time.Sleep(sleep)
 
-	var wRuns workflowRunsResponse
-	path := fmt.Sprintf("repos/%s/actions/runs?name=%s&event=repository_dispatch", opts.Repo, opts.Workflow)
-	err = client.Get(path, &wRuns)
+	runID, err := getRunID(client, opts.Repo, opts.Workflow)
 	if err != nil {
 		return err
 	}
 
-	runID := wRuns.WorkflowRuns[0].ID
 	run, err := getRun(client, opts.Repo, runID)
 	if err != nil {
 		return fmt.Errorf("failed to get run: %w", err)
@@ -168,6 +165,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 func renderRun(out io.Writer, opts repositoryDispatchOptions, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
 	cs := opts.IO.ColorScheme()
 
+	// TODO: getRun may not be needed, assuming we already have the correct run ID
 	run, err := getRun(client, repo, run.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get run: %w", err)
@@ -220,6 +218,16 @@ func renderRun(out io.Writer, opts repositoryDispatchOptions, client api.RESTCli
 	return run, nil
 }
 
+func getRunID(client api.RESTClient, repo, workflow string) (int64, error) {
+	var wRuns workflowRunsResponse
+	err := client.Get(fmt.Sprintf("repos/%s/actions/runs?name=%s&event=repository_dispatch", repo, workflow), &wRuns)
+	if err != nil {
+		return 0, err
+	}
+
+	return wRuns.WorkflowRuns[0].ID, nil
+}
+
 func getRun(client api.RESTClient, repo string, runID int64) (*shared.Run, error) {
 	var result shared.Run
 	err := client.Get(fmt.Sprintf("repos/%s/actions/runs/%d", repo, runID), &result)
@@ -247,13 +255,13 @@ func getAnnotations(client api.RESTClient, repo string, job shared.Job) ([]share
 		return nil, err
 	}
 
-	out := []shared.Annotation{}
+	annotations := []shared.Annotation{}
 	for _, annotation := range result {
 		annotation.JobName = job.Name
-		out = append(out, *annotation)
+		annotations = append(annotations, *annotation)
 	}
 
-	return out, nil
+	return annotations, nil
 }
 
 func init() {
