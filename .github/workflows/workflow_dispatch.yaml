@@ -1,0 +1,17 @@
+name: Goodbye
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "The name to address"
+        type: string
+        required: true
+
+jobs:
+  goodbye:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: say-goodbye
+        run: echo "Goodbye, ${{ inputs.name }}!"
