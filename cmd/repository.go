@@ -124,6 +124,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	annotationCache := map[int64][]shared.Annotation{}
 	out := &bytes.Buffer{}
 	opts.IO.StartAlternateScreenBuffer()
+
 	for run.Status != shared.Completed {
 		// Write to a temporary buffer to reduce total number of fetches
 		run, err = renderRun(out, *opts, client, opts.Repo, run, annotationCache)
@@ -146,7 +147,6 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 
 		_, err = io.Copy(opts.IO.Out, out)
 		out.Reset()
-
 		if err != nil {
 			break
 		}
@@ -157,6 +157,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		}
 		time.Sleep(duration)
 	}
+
 	opts.IO.StopAlternateScreenBuffer()
 
 	return nil
@@ -165,7 +166,6 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 func renderRun(out io.Writer, opts repositoryDispatchOptions, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
 	cs := opts.IO.ColorScheme()
 
-	// TODO: getRun may not be needed, assuming we already have the correct run ID
 	run, err := getRun(client, repo, run.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get run: %w", err)
