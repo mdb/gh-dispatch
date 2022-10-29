@@ -33,6 +33,7 @@ fmtcheck:
 
 check-tag:
 	./scripts/ensure-unique-version.sh "$(VERSION)"
+.PHONY: check-tag
 
 tag: check-tag
 	echo "creating git tag $(VERSION)"
@@ -48,3 +49,8 @@ release: tools
 # TODO: dynamically set architecture, which is currently hard-coded to amd64
 install: build
 	cp dist/gh-dispatch_$(shell echo $(shell uname) | tr '[:upper:]' '[:lower:]')_amd64/gh-dispatch ~/.local/share/gh/extensions/gh-dispatch/
+.PHONY: install
+
+demo:
+	vhs < demo.tape
+.PHONY: demo

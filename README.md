@@ -3,6 +3,8 @@
 `gh-dispatch` is an extension to the [gh CLI](https://cli.github.com/) for triggering [repository_dispatch](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) and
 [workflow_dispatch](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch) events and watching the resulting GitHub Actions workflow run.
 
+![demo](demo.gif)
+
 ## Installation
 
 Install the `gh` CLI [for your platform](https://github.com/cli/cli#installation). For example, on Mac OS:
