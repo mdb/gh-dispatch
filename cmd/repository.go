@@ -15,16 +15,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type repositoryDispatchOptions struct {
-	Repo          string
-	ClientPayload interface{}
-	EventType     string
-	Workflow      string
-	IO            *iostreams.IOStreams
-	HTTPTransport http.RoundTripper
-	AuthToken     string
-}
-
 type repositoryDispatchRequest struct {
 	EventType     string      `json:"event_type"`
 	ClientPayload interface{} `json:"client_payload"`
@@ -51,7 +41,7 @@ var repositoryCmd = &cobra.Command{
 
 		ios := iostreams.System()
 
-		return repositoryDispatchRun(&repositoryDispatchOptions{
+		return repositoryDispatchRun(&dispatchOptions{
 			ClientPayload: repoClientPayload,
 			EventType:     repositoryEventType,
 			Workflow:      repositoryWorkflow,
@@ -62,7 +52,7 @@ var repositoryCmd = &cobra.Command{
 	},
 }
 
-func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
+func repositoryDispatchRun(opts *dispatchOptions) error {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(repositoryDispatchRequest{
 		EventType:     opts.EventType,

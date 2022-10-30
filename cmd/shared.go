@@ -3,8 +3,10 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
+	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/go-gh/pkg/api"
 )
 
@@ -20,7 +22,19 @@ type workflowRunsResponse struct {
 	WorkflowRuns []workflowRun `json:"workflow_runs"`
 }
 
-func renderRun(out io.Writer, opts repositoryDispatchOptions, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
+type dispatchOptions struct {
+	Repo          string
+	Inputs        interface{}
+	ClientPayload interface{}
+	EventType     string
+	WorkflowID    string
+	Workflow      string
+	IO            *iostreams.IOStreams
+	HTTPTransport http.RoundTripper
+	AuthToken     string
+}
+
+func renderRun(out io.Writer, opts dispatchOptions, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
 	cs := opts.IO.ColorScheme()
 
 	run, err := getRun(client, repo, run.ID)
