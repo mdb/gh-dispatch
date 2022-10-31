@@ -86,7 +86,7 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 		return err
 	}
 
-	runID, err := getWorkflowDispatchRunID(client, opts.Repo, opts.Workflow)
+	runID, err := getRunID(client, opts.Repo, "workflow_dispatch")
 	if err != nil {
 		return err
 	}
@@ -137,22 +137,6 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 	opts.IO.StopAlternateScreenBuffer()
 
 	return nil
-}
-
-func getWorkflowDispatchRunID(client api.RESTClient, repo, workflow string) (int64, error) {
-	for {
-		var wRuns workflowRunsResponse
-		// TODO: I believe name= is ignored; we'll likely need to manually match on the name in the results
-		// This also means both workflow and repository might be able to share a single getRunID func
-		err := client.Get(fmt.Sprintf("repos/%s/actions/runs?name=%s&event=workflow_dispatch", repo, workflow), &wRuns)
-		if err != nil {
-			return 0, err
-		}
-
-		if wRuns.WorkflowRuns[0].Status != shared.Completed {
-			return wRuns.WorkflowRuns[0].ID, nil
-		}
-	}
 }
 
 func init() {

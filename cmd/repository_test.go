@@ -43,7 +43,6 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.StringResponse("{}"))
 
 				v := url.Values{}
-				v.Set("name", "foo")
 				v.Set("event", "repository_dispatch")
 
 				reg.Register(

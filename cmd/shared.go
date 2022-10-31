@@ -21,6 +21,22 @@ type workflowRunsResponse struct {
 	WorkflowRuns []workflowRun `json:"workflow_runs"`
 }
 
+func getRunID(client api.RESTClient, repo, event string) (int64, error) {
+	for {
+		var wRuns workflowRunsResponse
+		err := client.Get(fmt.Sprintf("repos/%s/actions/runs?event=%s", repo, event), &wRuns)
+		if err != nil {
+			return 0, err
+		}
+
+		// TODO: match on workflow name, or somehow more accurately ensure we are fetching
+		// _the_ workflow triggered by the `gh dispatch` command.
+		if wRuns.WorkflowRuns[0].Status != shared.Completed {
+			return wRuns.WorkflowRuns[0].ID, nil
+		}
+	}
+}
+
 func renderRun(out io.Writer, io *iostreams.IOStreams, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
 	cs := io.ColorScheme()
 
