@@ -146,6 +146,8 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 func getRepositoryDispatchRunID(client api.RESTClient, repo, workflow string) (int64, error) {
 	for {
 		var wRuns workflowRunsResponse
+		// TODO: I believe name= is ignored; we'll likely need to manually match on the name in the results
+		// This also means both workflow and repository might be able to share a single getRunID func
 		err := client.Get(fmt.Sprintf("repos/%s/actions/runs?name=%s&event=repository_dispatch", repo, workflow), &wRuns)
 		if err != nil {
 			return 0, err
