@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -35,6 +37,50 @@ func getRunID(client api.RESTClient, repo, event string) (int64, error) {
 			return wRuns.WorkflowRuns[0].ID, nil
 		}
 	}
+}
+
+func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *shared.Run) error {
+	cs := ios.ColorScheme()
+	annotationCache := map[int64][]shared.Annotation{}
+	out := &bytes.Buffer{}
+	ios.StartAlternateScreenBuffer()
+
+	for run.Status != shared.Completed {
+		// Write to a temporary buffer to reduce total number of fetches
+		run, err := renderRun(out, ios, client, repo, run, annotationCache)
+		if err != nil {
+			return err
+		}
+
+		if run.Status == shared.Completed {
+			break
+		}
+
+		// If not completed, refresh the screen buffer and write the temporary buffer to stdout
+		ios.RefreshScreen()
+
+		interval := 3
+		fmt.Fprintln(ios.Out, cs.Boldf("Refreshing run status every %d seconds. Press Ctrl+C to quit.", interval))
+		fmt.Fprintln(ios.Out)
+		fmt.Fprintln(ios.Out, cs.Boldf("https://github.com/%s/actions/runs/%d", repo, run.ID))
+		fmt.Fprintln(ios.Out)
+
+		_, err = io.Copy(ios.Out, out)
+		out.Reset()
+		if err != nil {
+			break
+		}
+
+		duration, err := time.ParseDuration(fmt.Sprintf("%ds", interval))
+		if err != nil {
+			return fmt.Errorf("could not parse interval: %w", err)
+		}
+		time.Sleep(duration)
+	}
+
+	ios.StopAlternateScreenBuffer()
+
+	return nil
 }
 
 func renderRun(out io.Writer, io *iostreams.IOStreams, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
