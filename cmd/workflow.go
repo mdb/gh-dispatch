@@ -17,11 +17,13 @@ import (
 
 type workflowDispatchRequest struct {
 	Inputs interface{} `json:"inputs"`
+	Ref    string      `json:"ref"`
 }
 
 type workflowDispatchOptions struct {
 	Repo          string
 	Inputs        interface{}
+	Ref           string
 	Workflow      string
 	IO            *iostreams.IOStreams
 	HTTPTransport http.RoundTripper
@@ -31,6 +33,7 @@ type workflowDispatchOptions struct {
 var (
 	workflowInputs string
 	workflowName   string
+	workflowRef    string
 )
 
 // workflowCmd represents the workflow subcommand
@@ -49,7 +52,7 @@ var workflowCmd = &cobra.Command{
 		ios := iostreams.System()
 
 		return workflowDispatchRun(&workflowDispatchOptions{
-			Inputs:        workflowInputs,
+			Inputs:        wInputs,
 			Workflow:      workflowName,
 			Repo:          repo,
 			HTTPTransport: http.DefaultTransport,
@@ -62,6 +65,7 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(workflowDispatchRequest{
 		Inputs: opts.Inputs,
+		Ref:    opts.Ref,
 	})
 	if err != nil {
 		return err
@@ -151,6 +155,7 @@ func getWorkflowDispatchRunID(client api.RESTClient, repo, workflow string) (int
 func init() {
 	workflowCmd.Flags().StringVarP(&workflowInputs, "inputs", "i", "", "The workflow dispatch inputs JSON string.")
 	workflowCmd.MarkFlagRequired("inputs")
+	workflowCmd.Flags().StringVarP(&workflowRef, "ref", "f", "main", "The git reference for the workflow. Can be a branch or tag name.")
 	workflowCmd.Flags().StringVarP(&workflowName, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
 
 	rootCmd.AddCommand(workflowCmd)
