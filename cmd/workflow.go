@@ -48,7 +48,7 @@ func workflowDispatchRun(opts *dispatchOptions) error {
 		return err
 	}
 
-	runID, err := getRunID(client, opts.Repo, opts.WorkflowID)
+	runID, err := getWorkflowDispatchRunID(client, opts.Repo, opts.WorkflowID)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func workflowDispatchRun(opts *dispatchOptions) error {
 
 	for run.Status != shared.Completed {
 		// Write to a temporary buffer to reduce total number of fetches
-		run, err = renderRun(out, *opts, client, opts.Repo, run, annotationCache)
+		run, err = renderRun(out, opts.IO, client, opts.Repo, run, annotationCache)
 		if err != nil {
 			return err
 		}
@@ -99,6 +99,20 @@ func workflowDispatchRun(opts *dispatchOptions) error {
 	opts.IO.StopAlternateScreenBuffer()
 
 	return nil
+}
+
+func getWorkflowDispatchRunID(client api.RESTClient, repo, workflow string) (int64, error) {
+	for {
+		var wRuns workflowRunsResponse
+		err := client.Get(fmt.Sprintf("repos/%s/actions/runs?name=%s&event=workflow_dispatch", repo, workflow), &wRuns)
+		if err != nil {
+			return 0, err
+		}
+
+		if wRuns.WorkflowRuns[0].Status != shared.Completed {
+			return wRuns.WorkflowRuns[0].ID, nil
+		}
+	}
 }
 
 func init() {

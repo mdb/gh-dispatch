@@ -34,8 +34,8 @@ type dispatchOptions struct {
 	AuthToken     string
 }
 
-func renderRun(out io.Writer, opts dispatchOptions, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
-	cs := opts.IO.ColorScheme()
+func renderRun(out io.Writer, io *iostreams.IOStreams, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
+	cs := io.ColorScheme()
 
 	run, err := getRun(client, repo, run.ID)
 	if err != nil {
@@ -87,20 +87,6 @@ func renderRun(out io.Writer, opts dispatchOptions, client api.RESTClient, repo 
 	}
 
 	return run, nil
-}
-
-func getRunID(client api.RESTClient, repo, workflow string) (int64, error) {
-	for {
-		var wRuns workflowRunsResponse
-		err := client.Get(fmt.Sprintf("repos/%s/actions/runs?name=%s&event=repository_dispatch", repo, workflow), &wRuns)
-		if err != nil {
-			return 0, err
-		}
-
-		if wRuns.WorkflowRuns[0].Status != shared.Completed {
-			return wRuns.WorkflowRuns[0].ID, nil
-		}
-	}
 }
 
 func getRun(client api.RESTClient, repo string, runID int64) (*shared.Run, error) {

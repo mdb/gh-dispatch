@@ -12,7 +12,7 @@ import (
 func TestRepositoryDispatchRun(t *testing.T) {
 	tests := []struct {
 		name      string
-		opts      *dispatchOptions
+		opts      *repositoryDispatchOptions
 		httpStubs func(*httpmock.Registry)
 		wantErr   bool
 		errMsg    string
@@ -20,7 +20,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 	}{
 		{
 			name: "no specified workflow",
-			opts: &dispatchOptions{
+			opts: &repositoryDispatchOptions{
 				Repo:      "OWNER/REPO",
 				EventType: "hello",
 			},
@@ -32,7 +32,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 			wantOut: "",
 		}, {
 			name: "specified workflow",
-			opts: &dispatchOptions{
+			opts: &repositoryDispatchOptions{
 				Repo:      "OWNER/REPO",
 				EventType: "hello",
 				Workflow:  "foo",
@@ -139,7 +139,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 			wantOut: "Refreshing run status every 3 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/OWNER/REPO/actions/runs/123\n\n\nJOBS\n✓ build in 1m59s (ID 123)\n  ✓ Run actions/checkout@v2\n  ✓ Test\n",
 		}, {
 			name: "malformed JSON response",
-			opts: &dispatchOptions{
+			opts: &repositoryDispatchOptions{
 				Repo:      "OWNER/REPO",
 				EventType: "hello",
 			},

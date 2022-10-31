@@ -20,6 +20,16 @@ type repositoryDispatchRequest struct {
 	ClientPayload interface{} `json:"client_payload"`
 }
 
+type repositoryDispatchOptions struct {
+	Repo          string
+	ClientPayload interface{}
+	EventType     string
+	Workflow      string
+	IO            *iostreams.IOStreams
+	HTTPTransport http.RoundTripper
+	AuthToken     string
+}
+
 var (
 	repositoryEventType     string
 	repositoryClientPayload string
@@ -41,7 +51,7 @@ var repositoryCmd = &cobra.Command{
 
 		ios := iostreams.System()
 
-		return repositoryDispatchRun(&dispatchOptions{
+		return repositoryDispatchRun(&repositoryDispatchOptions{
 			ClientPayload: repoClientPayload,
 			EventType:     repositoryEventType,
 			Workflow:      repositoryWorkflow,
@@ -52,7 +62,7 @@ var repositoryCmd = &cobra.Command{
 	},
 }
 
-func repositoryDispatchRun(opts *dispatchOptions) error {
+func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(repositoryDispatchRequest{
 		EventType:     opts.EventType,
@@ -80,7 +90,7 @@ func repositoryDispatchRun(opts *dispatchOptions) error {
 		return nil
 	}
 
-	runID, err := getRunID(client, opts.Repo, opts.Workflow)
+	runID, err := getRepositoryDispatchRunID(client, opts.Repo, opts.Workflow)
 	if err != nil {
 		return err
 	}
@@ -97,7 +107,7 @@ func repositoryDispatchRun(opts *dispatchOptions) error {
 
 	for run.Status != shared.Completed {
 		// Write to a temporary buffer to reduce total number of fetches
-		run, err = renderRun(out, *opts, client, opts.Repo, run, annotationCache)
+		run, err = renderRun(out, opts.IO, client, opts.Repo, run, annotationCache)
 		if err != nil {
 			return err
 		}
@@ -131,6 +141,20 @@ func repositoryDispatchRun(opts *dispatchOptions) error {
 	opts.IO.StopAlternateScreenBuffer()
 
 	return nil
+}
+
+func getRepositoryDispatchRunID(client api.RESTClient, repo, workflow string) (int64, error) {
+	for {
+		var wRuns workflowRunsResponse
+		err := client.Get(fmt.Sprintf("repos/%s/actions/runs?name=%s&event=repository_dispatch", repo, workflow), &wRuns)
+		if err != nil {
+			return 0, err
+		}
+
+		if wRuns.WorkflowRuns[0].Status != shared.Completed {
+			return wRuns.WorkflowRuns[0].ID, nil
+		}
+	}
 }
 
 func init() {
