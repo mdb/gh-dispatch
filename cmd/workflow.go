@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
+	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/spf13/cobra"
@@ -17,15 +19,46 @@ type workflowDispatchRequest struct {
 	Inputs interface{} `json:"inputs"`
 }
 
+type workflowDispatchOptions struct {
+	Repo          string
+	Inputs        interface{}
+	Workflow      string
+	IO            *iostreams.IOStreams
+	HTTPTransport http.RoundTripper
+	AuthToken     string
+}
+
+var (
+	workflowInputs string
+	workflowName   string
+)
+
 // workflowCmd represents the workflow subcommand
 var workflowCmd = &cobra.Command{
 	Use:     "workflow",
 	Short:   `The 'workflow' subcommand triggers workflow dispatch events`,
 	Long:    `The 'workflow' subcommand triggers workflow dispatch events`,
 	Example: `TODO`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		repo, _ := cmd.Flags().GetString("repo")
+
+		b := []byte(workflowInputs)
+		var wInputs interface{}
+		json.Unmarshal(b, &wInputs)
+
+		ios := iostreams.System()
+
+		return workflowDispatchRun(&workflowDispatchOptions{
+			Inputs:        workflowInputs,
+			Workflow:      workflowName,
+			Repo:          repo,
+			HTTPTransport: http.DefaultTransport,
+			IO:            ios,
+		})
+	},
 }
 
-func workflowDispatchRun(opts *dispatchOptions) error {
+func workflowDispatchRun(opts *workflowDispatchOptions) error {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(workflowDispatchRequest{
 		Inputs: opts.Inputs,
@@ -43,12 +76,12 @@ func workflowDispatchRun(opts *dispatchOptions) error {
 	}
 
 	var in interface{}
-	err = client.Post(fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", opts.Repo, opts.WorkflowID), &buf, &in)
+	err = client.Post(fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", opts.Repo, opts.Workflow), &buf, &in)
 	if err != nil {
 		return err
 	}
 
-	runID, err := getWorkflowDispatchRunID(client, opts.Repo, opts.WorkflowID)
+	runID, err := getWorkflowDispatchRunID(client, opts.Repo, opts.Workflow)
 	if err != nil {
 		return err
 	}
@@ -116,5 +149,9 @@ func getWorkflowDispatchRunID(client api.RESTClient, repo, workflow string) (int
 }
 
 func init() {
+	workflowCmd.Flags().StringVarP(&workflowInputs, "inputs", "i", "", "The workflow dispatch inputs JSON string.")
+	workflowCmd.MarkFlagRequired("inputs")
+	workflowCmd.Flags().StringVarP(&workflowName, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
+
 	rootCmd.AddCommand(workflowCmd)
 }

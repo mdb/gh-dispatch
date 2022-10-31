@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"net/http"
 
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -20,18 +19,6 @@ type workflowRun struct {
 
 type workflowRunsResponse struct {
 	WorkflowRuns []workflowRun `json:"workflow_runs"`
-}
-
-type dispatchOptions struct {
-	Repo          string
-	Inputs        interface{}
-	ClientPayload interface{}
-	EventType     string
-	WorkflowID    string
-	Workflow      string
-	IO            *iostreams.IOStreams
-	HTTPTransport http.RoundTripper
-	AuthToken     string
 }
 
 func renderRun(out io.Writer, io *iostreams.IOStreams, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
