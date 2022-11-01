@@ -28,6 +28,8 @@ func TestWorkflowDispatchRun(t *testing.T) {
 				workflow: workflow,
 			},
 			httpStubs: func(reg *httpmock.Registry) {
+				// TODO: DRY up redundant response JSON used by all tests
+				// TODO: test that proper request body is sent on POSTs
 				reg.Register(
 					httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
 					httpmock.StringResponse("{}"))
