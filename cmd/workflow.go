@@ -100,8 +100,9 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 func init() {
 	workflowCmd.Flags().StringVarP(&workflowInputs, "inputs", "i", "", "The workflow dispatch inputs JSON string.")
 	workflowCmd.MarkFlagRequired("inputs")
-	workflowCmd.Flags().StringVarP(&workflowRef, "ref", "f", "main", "The git reference for the workflow. Can be a branch or tag name.")
 	workflowCmd.Flags().StringVarP(&workflowName, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
+	workflowCmd.MarkFlagRequired("workflow")
+	workflowCmd.Flags().StringVarP(&workflowRef, "ref", "f", "main", "The git reference for the workflow. Can be a branch or tag name.")
 
 	rootCmd.AddCommand(workflowCmd)
 }
