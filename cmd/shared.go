@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
@@ -21,6 +22,13 @@ type workflowRun struct {
 
 type workflowRunsResponse struct {
 	WorkflowRuns []workflowRun `json:"workflow_runs"`
+}
+
+type dispatchOptions struct {
+	repo          string
+	httpTransport http.RoundTripper
+	io            *iostreams.IOStreams
+	authToken     string
 }
 
 func getRunID(client api.RESTClient, repo, event string) (int64, error) {

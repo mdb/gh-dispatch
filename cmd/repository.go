@@ -18,13 +18,10 @@ type repositoryDispatchRequest struct {
 }
 
 type repositoryDispatchOptions struct {
-	Repo          string
-	ClientPayload interface{}
-	EventType     string
-	Workflow      string
-	IO            *iostreams.IOStreams
-	HTTPTransport http.RoundTripper
-	AuthToken     string
+	clientPayload interface{}
+	eventType     string
+	workflow      string
+	dispatchOptions
 }
 
 var (
@@ -48,13 +45,17 @@ var repositoryCmd = &cobra.Command{
 
 		ios := iostreams.System()
 
+		dOptions := dispatchOptions{
+			repo:          repo,
+			httpTransport: http.DefaultTransport,
+			io:            ios,
+		}
+
 		return repositoryDispatchRun(&repositoryDispatchOptions{
-			ClientPayload: repoClientPayload,
-			EventType:     repositoryEventType,
-			Workflow:      repositoryWorkflow,
-			Repo:          repo,
-			HTTPTransport: http.DefaultTransport,
-			IO:            ios,
+			clientPayload:   repoClientPayload,
+			eventType:       repositoryEventType,
+			workflow:        repositoryWorkflow,
+			dispatchOptions: dOptions,
 		})
 	},
 }
@@ -62,42 +63,42 @@ var repositoryCmd = &cobra.Command{
 func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(repositoryDispatchRequest{
-		EventType:     opts.EventType,
-		ClientPayload: opts.ClientPayload,
+		EventType:     opts.eventType,
+		ClientPayload: opts.clientPayload,
 	})
 	if err != nil {
 		return err
 	}
 
 	client, err := gh.RESTClient(&api.ClientOptions{
-		Transport: opts.HTTPTransport,
-		AuthToken: opts.AuthToken,
+		Transport: opts.httpTransport,
+		AuthToken: opts.authToken,
 	})
 	if err != nil {
 		return err
 	}
 
 	var in interface{}
-	err = client.Post(fmt.Sprintf("repos/%s/dispatches", opts.Repo), &buf, &in)
+	err = client.Post(fmt.Sprintf("repos/%s/dispatches", opts.repo), &buf, &in)
 	if err != nil {
 		return err
 	}
 
-	if opts.Workflow == "" {
+	if opts.workflow == "" {
 		return nil
 	}
 
-	runID, err := getRunID(client, opts.Repo, "repository_dispatch")
+	runID, err := getRunID(client, opts.repo, "repository_dispatch")
 	if err != nil {
 		return err
 	}
 
-	run, err := getRun(client, opts.Repo, runID)
+	run, err := getRun(client, opts.repo, runID)
 	if err != nil {
 		return fmt.Errorf("failed to get run: %w", err)
 	}
 
-	return render(opts.IO, client, opts.Repo, run)
+	return render(opts.io, client, opts.repo, run)
 }
 
 func init() {
