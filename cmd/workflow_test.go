@@ -10,40 +10,31 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRepositoryDispatchRun(t *testing.T) {
+func TestWorkflowDispatchRun(t *testing.T) {
 	repo := "OWNER/REPO"
+	workflow := "workflow.yaml"
 	tests := []struct {
 		name      string
-		opts      *repositoryDispatchOptions
+		opts      *workflowDispatchOptions
 		httpStubs func(*httpmock.Registry)
 		wantErr   bool
 		errMsg    string
 		wantOut   string
 	}{
 		{
-			name: "no specified workflow",
-			opts: &repositoryDispatchOptions{
-				eventType: "hello",
+			name: "basic usage",
+			opts: &workflowDispatchOptions{
+				inputs:   `{"foo": "bar"}`,
+				workflow: workflow,
 			},
 			httpStubs: func(reg *httpmock.Registry) {
+				// TODO: test that proper request body is sent on POSTs
 				reg.Register(
-					httpmock.REST("POST", fmt.Sprintf("repos/%s/dispatches", repo)),
-					httpmock.StringResponse("{}"))
-			},
-			wantOut: "",
-		}, {
-			name: "specified workflow",
-			opts: &repositoryDispatchOptions{
-				eventType: "hello",
-				workflow:  "foo",
-			},
-			httpStubs: func(reg *httpmock.Registry) {
-				reg.Register(
-					httpmock.REST("POST", fmt.Sprintf("repos/%s/dispatches", repo)),
+					httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
 					httpmock.StringResponse("{}"))
 
 				v := url.Values{}
-				v.Set("event", "repository_dispatch")
+				v.Set("event", "workflow_dispatch")
 
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/runs", repo), v),
@@ -83,12 +74,13 @@ func TestRepositoryDispatchRun(t *testing.T) {
 			wantOut: "Refreshing run status every 3 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/OWNER/REPO/actions/runs/123\n\n\nJOBS\n✓ build in 1m59s (ID 123)\n  ✓ Run actions/checkout@v2\n  ✓ Test\n",
 		}, {
 			name: "malformed JSON response",
-			opts: &repositoryDispatchOptions{
-				eventType: "hello",
+			opts: &workflowDispatchOptions{
+				inputs:   `{"foo": "bar"}`,
+				workflow: workflow,
 			},
 			httpStubs: func(reg *httpmock.Registry) {
 				reg.Register(
-					httpmock.REST("POST", fmt.Sprintf("repos/%s/dispatches", repo)),
+					httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
 					httpmock.StringResponse("{"))
 			},
 			wantOut: "",
@@ -110,7 +102,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 		tt.opts.authToken = "123"
 
 		t.Run(tt.name, func(t *testing.T) {
-			err := repositoryDispatchRun(tt.opts)
+			err := workflowDispatchRun(tt.opts)
 
 			if tt.wantErr {
 				assert.EqualError(t, err, tt.errMsg)

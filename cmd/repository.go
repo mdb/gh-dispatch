@@ -4,30 +4,24 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"time"
 
-	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/spf13/cobra"
 )
 
-type repositoryDispatchOptions struct {
-	Repo          string
-	ClientPayload interface{}
-	EventType     string
-	Workflow      string
-	IO            *iostreams.IOStreams
-	HTTPTransport http.RoundTripper
-	AuthToken     string
-}
-
 type repositoryDispatchRequest struct {
 	EventType     string      `json:"event_type"`
 	ClientPayload interface{} `json:"client_payload"`
+}
+
+type repositoryDispatchOptions struct {
+	clientPayload interface{}
+	eventType     string
+	workflow      string
+	dispatchOptions
 }
 
 var (
@@ -51,13 +45,17 @@ var repositoryCmd = &cobra.Command{
 
 		ios := iostreams.System()
 
+		dOptions := dispatchOptions{
+			repo:          repo,
+			httpTransport: http.DefaultTransport,
+			io:            ios,
+		}
+
 		return repositoryDispatchRun(&repositoryDispatchOptions{
-			ClientPayload: repoClientPayload,
-			EventType:     repositoryEventType,
-			Workflow:      repositoryWorkflow,
-			Repo:          repo,
-			HTTPTransport: http.DefaultTransport,
-			IO:            ios,
+			clientPayload:   repoClientPayload,
+			eventType:       repositoryEventType,
+			workflow:        repositoryWorkflow,
+			dispatchOptions: dOptions,
 		})
 	},
 }
@@ -65,82 +63,42 @@ var repositoryCmd = &cobra.Command{
 func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(repositoryDispatchRequest{
-		EventType:     opts.EventType,
-		ClientPayload: opts.ClientPayload,
+		EventType:     opts.eventType,
+		ClientPayload: opts.clientPayload,
 	})
 	if err != nil {
 		return err
 	}
 
 	client, err := gh.RESTClient(&api.ClientOptions{
-		Transport: opts.HTTPTransport,
-		AuthToken: opts.AuthToken,
+		Transport: opts.httpTransport,
+		AuthToken: opts.authToken,
 	})
 	if err != nil {
 		return err
 	}
 
 	var in interface{}
-	err = client.Post(fmt.Sprintf("repos/%s/dispatches", opts.Repo), &buf, &in)
+	err = client.Post(fmt.Sprintf("repos/%s/dispatches", opts.repo), &buf, &in)
 	if err != nil {
 		return err
 	}
 
-	if opts.Workflow == "" {
+	if opts.workflow == "" {
 		return nil
 	}
 
-	runID, err := getRunID(client, opts.Repo, opts.Workflow)
+	runID, err := getRunID(client, opts.repo, "repository_dispatch")
 	if err != nil {
 		return err
 	}
 
-	run, err := getRun(client, opts.Repo, runID)
+	run, err := getRun(client, opts.repo, runID)
 	if err != nil {
 		return fmt.Errorf("failed to get run: %w", err)
 	}
 
-	cs := opts.IO.ColorScheme()
-	annotationCache := map[int64][]shared.Annotation{}
-	out := &bytes.Buffer{}
-	opts.IO.StartAlternateScreenBuffer()
-
-	for run.Status != shared.Completed {
-		// Write to a temporary buffer to reduce total number of fetches
-		run, err = renderRun(out, *opts, client, opts.Repo, run, annotationCache)
-		if err != nil {
-			return err
-		}
-
-		if run.Status == shared.Completed {
-			break
-		}
-
-		// If not completed, refresh the screen buffer and write the temporary buffer to stdout
-		opts.IO.RefreshScreen()
-
-		interval := 3
-		fmt.Fprintln(opts.IO.Out, cs.Boldf("Refreshing run status every %d seconds. Press Ctrl+C to quit.", interval))
-		fmt.Fprintln(opts.IO.Out)
-		fmt.Fprintln(opts.IO.Out, cs.Boldf("https://github.com/%s/actions/runs/%d", opts.Repo, runID))
-		fmt.Fprintln(opts.IO.Out)
-
-		_, err = io.Copy(opts.IO.Out, out)
-		out.Reset()
-		if err != nil {
-			break
-		}
-
-		duration, err := time.ParseDuration(fmt.Sprintf("%ds", interval))
-		if err != nil {
-			return fmt.Errorf("could not parse interval: %w", err)
-		}
-		time.Sleep(duration)
-	}
-
-	opts.IO.StopAlternateScreenBuffer()
-
-	return nil
+	return render(opts.io, client, opts.repo, run)
 }
 
 func init() {
