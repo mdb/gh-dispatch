@@ -7,6 +7,11 @@ on:
         description: "The name to address"
         type: string
         required: true
+      force_fail:
+        description: "Deliberately force the run to fail"
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   goodbye:
@@ -14,4 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: say-goodbye
-        run: echo "Goodbye, ${{ inputs.name }}!"
+        run: |
+          if [ "${{ inputs.force_fail }}" = "true" ]; then
+            echo "forced fail"
+            exit 1
+          fi
+
+          echo "Goodbye, ${{ inputs.name }}!"
