@@ -31,6 +31,9 @@ var (
 )
 
 // workflowCmd represents the workflow subcommand
+// TODO: it appears the resulting run rendering may
+// sometimes fail to denote each job as passing or failing,
+// perhaps due to a race condition somewhere?
 var workflowCmd = &cobra.Command{
 	Use:     "workflow",
 	Short:   `The 'workflow' subcommand triggers workflow dispatch events`,
@@ -98,10 +101,16 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 }
 
 func init() {
+	// TODO: how does the 'gh run' command represent inputs?
+	// Is it worth better emulating its interface?
 	workflowCmd.Flags().StringVarP(&workflowInputs, "inputs", "i", "", "The workflow dispatch inputs JSON string.")
 	workflowCmd.MarkFlagRequired("inputs")
+	// TODO: how does the 'gh run' command represent workflow?
+	// Is it worth better emulating its interface?
 	workflowCmd.Flags().StringVarP(&workflowName, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
 	workflowCmd.MarkFlagRequired("workflow")
+	// TODO: how does the 'gh run' command represent ref?
+	// Is it worth better emulating its interface?
 	workflowCmd.Flags().StringVarP(&workflowRef, "ref", "f", "main", "The git reference for the workflow. Can be a branch or tag name.")
 
 	rootCmd.AddCommand(workflowCmd)

@@ -10,6 +10,10 @@ on:
       force_fail:
         description: "Deliberately force the run to fail"
         type: boolean
+        # Despite that force_fail is not required and has a default option,
+        # its value must always be provided (and provided as a string) due
+        # to a GHA platform bug, as explained here:
+        # https://github.com/cli/cli/issues/5246#issuecomment-1259581339
         required: false
         default: false
 
