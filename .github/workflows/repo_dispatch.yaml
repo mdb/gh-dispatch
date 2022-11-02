@@ -10,4 +10,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: say-hello
-        run: echo "Hello, ${{ github.event.client_payload.name }}!"
+        run: |
+          if [ "${{ github.event.client_payload.force_fail }}" = "true" ]; then
+            echo "forced fail"
+            exit 1
+          fi
+
+          echo "Hello, ${{ github.event.client_payload.name }}!"
