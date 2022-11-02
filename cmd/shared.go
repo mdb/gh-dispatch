@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
+	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/go-gh/pkg/api"
 )
@@ -89,10 +90,16 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 
 	ios.StopAlternateScreenBuffer()
 
-	if shared.IsFailureState(run.Conclusion) {
-		fmt.Fprintln(ios.Out)
+	symbol, symbolColor := shared.Symbol(cs, run.Status, run.Conclusion)
+	id := cs.Cyanf("%d", run.ID)
 
-		return fmt.Errorf("%s run failed with conclusion: %s", run.Name, run.Conclusion)
+	if ios.IsStdoutTTY() {
+		fmt.Fprintln(ios.Out)
+		fmt.Fprintf(ios.Out, "%s %s (%s) completed with '%s'\n", symbolColor(symbol), cs.Bold(run.Name), id, run.Conclusion)
+	}
+
+	if run.Conclusion != shared.Success {
+		return cmdutil.SilentError
 	}
 
 	return nil

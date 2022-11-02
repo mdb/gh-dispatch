@@ -65,7 +65,8 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
 						"id": 123,
-						"status": "completed"
+						"status": "completed",
+						"conclusion": "success"
 					}`))
 
 				reg.Register(
