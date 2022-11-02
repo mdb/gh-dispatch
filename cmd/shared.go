@@ -55,7 +55,8 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 
 	for run.Status != shared.Completed {
 		// Write to a temporary buffer to reduce total number of fetches
-		run, err := renderRun(out, ios, client, repo, run, annotationCache)
+		var err error
+		run, err = renderRun(out, ios, client, repo, run, annotationCache)
 		if err != nil {
 			return err
 		}
@@ -87,6 +88,10 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 	}
 
 	ios.StopAlternateScreenBuffer()
+
+	if shared.IsFailureState(run.Conclusion) {
+		return fmt.Errorf("%s run failed: %s", run.Name, run.Conclusion)
+	}
 
 	return nil
 }
