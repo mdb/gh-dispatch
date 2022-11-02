@@ -77,7 +77,7 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 		_, err = io.Copy(ios.Out, out)
 		out.Reset()
 		if err != nil {
-			break
+			return err
 		}
 
 		duration, err := time.ParseDuration(fmt.Sprintf("%ds", interval))
@@ -90,7 +90,9 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 	ios.StopAlternateScreenBuffer()
 
 	if shared.IsFailureState(run.Conclusion) {
-		return fmt.Errorf("%s run failed: %s", run.Name, run.Conclusion)
+		fmt.Fprintln(ios.Out)
+
+		return fmt.Errorf("%s run failed with conclusion: %s", run.Name, run.Conclusion)
 	}
 
 	return nil
