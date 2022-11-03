@@ -1,3 +1,5 @@
+[![CI/CD](https://github.com/mdb/gh-dispatch/actions/workflows/cicd.yaml/badge.svg)](https://github.com/mdb/gh-dispatch/actions/workflows/cicd.yaml)
+
 # gh-dispatch
 
 `gh-dispatch` is an extension to the [gh CLI](https://cli.github.com/) for triggering [repository_dispatch](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) and
