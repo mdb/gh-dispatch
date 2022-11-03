@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
@@ -19,37 +20,36 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestRootCommand(t *testing.T) {
+func TestCommand(t *testing.T) {
+	basicOut := "gh dispatch: Trigger a GitHub dispatch event and watch the resulting GitHub Actions run\n\nUsage:\n  gh [command]\n\nExamples:\nTODO\n\nAvailable Commands:\n  completion  Generate the autocompletion script for the specified shell\n  help        Help about any command\n  repository  The 'repository' subcommand triggers repository dispatch events\n  workflow    The 'workflow' subcommand triggers workflow dispatch events\n\nFlags:\n  -h, --help          help for gh\n  -R, --repo string   The targeted repository's full name (in 'owner/repo' format)\n  -v, --version       version for gh\n\nUse \"gh [command] --help\" for more information about a command.\n"
 	tests := []struct {
 		arg     string
-		outputs []string
-		err     error
+		wantOut string
+		errMsg  string
+		wantErr bool
 	}{{
 		arg:     "",
-		outputs: []string{"gh dispatch: Trigger a GitHub dispatch event and watch the resulting GitHub Actions run"},
-		err:     nil,
+		wantOut: basicOut,
+	}, {
+		arg:     "--help",
+		wantOut: basicOut,
+	}, {
+		arg:     "help",
+		wantOut: basicOut,
 	}}
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("when 'gh dispatch' is passed '%s'", test.arg), func(t *testing.T) {
 			output, err := exec.Command("./gh-dispatch", test.arg).CombinedOutput()
 
-			if test.err == nil && err != nil {
-				t.Errorf("expected '%s' not to error; got '%v'", test.arg, err)
+			if test.wantErr {
+				assert.EqualError(t, err, test.errMsg)
+			} else {
+				assert.NoError(t, err)
 			}
 
-			if test.err != nil && err == nil {
-				t.Errorf("expected '%s' to error with '%s', but it didn't error", test.arg, test.err.Error())
-			}
-
-			if test.err != nil && err != nil && test.err.Error() != err.Error() {
-				t.Errorf("expected '%s' to error with '%s'; got '%s'", test.arg, test.err.Error(), err.Error())
-			}
-
-			for _, o := range test.outputs {
-				if !strings.Contains(string(output), o) {
-					t.Errorf("expected '%s' to include output '%s'; got '%s'", test.arg, o, output)
-				}
+			if got := string(output); got != test.wantOut {
+				t.Errorf("got stdout:\n%q\nwant:\n%q", got, test.wantOut)
 			}
 		})
 	}
