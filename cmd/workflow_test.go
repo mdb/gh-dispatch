@@ -74,6 +74,60 @@ func TestWorkflowDispatchRun(t *testing.T) {
 			},
 			wantOut: "Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/OWNER/REPO/actions/runs/123\n\n\nJOBS\n✓ build in 1m59s (ID 123)\n  ✓ Run actions/checkout@v2\n  ✓ Test\n",
 		}, {
+			name: "unsuccessful workflow run",
+			opts: &workflowDispatchOptions{
+				inputs:   `{"foo": "bar"}`,
+				workflow: workflow,
+			},
+			httpStubs: func(reg *httpmock.Registry) {
+				// TODO: test that proper request body is sent on POSTs
+				reg.Register(
+					httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
+					httpmock.StringResponse("{}"))
+
+				v := url.Values{}
+				v.Set("event", "workflow_dispatch")
+
+				reg.Register(
+					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/runs", repo), v),
+					httpmock.StringResponse(getWorkflowRunsResponse))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
+					httpmock.StringResponse(`{
+						"id": 123
+					}`))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
+					httpmock.StringResponse(`{
+						"id": 123
+					}`))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
+					httpmock.StringResponse(`{
+						"id": 123,
+						"status": "completed",
+						"conclusion": "failure"
+					}`))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
+					httpmock.StringResponse(getFailingJobsResponse))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
+					httpmock.StringResponse(getJobsResponse))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/check-runs/123/annotations", repo)),
+					httpmock.StringResponse("[]"))
+			},
+			wantOut: "Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/OWNER/REPO/actions/runs/123\n\n\nJOBS\n✓ build in 1m59s (ID 123)\n  ✓ Run actions/checkout@v2\n  X Test\n",
+			wantErr: true,
+			errMsg:  "SilentError",
+		}, {
 			name: "malformed JSON response",
 			opts: &workflowDispatchOptions{
 				inputs:   `{"foo": "bar"}`,
