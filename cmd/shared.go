@@ -69,7 +69,7 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 		// If not completed, refresh the screen buffer and write the temporary buffer to stdout
 		ios.RefreshScreen()
 
-		interval := 3
+		interval := 2
 		fmt.Fprintln(ios.Out, cs.Boldf("Refreshing run status every %d seconds. Press Ctrl+C to quit.", interval))
 		fmt.Fprintln(ios.Out)
 		fmt.Fprintln(ios.Out, cs.Boldf("https://github.com/%s/actions/runs/%d", repo, run.ID))

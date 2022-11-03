@@ -81,7 +81,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/check-runs/123/annotations", repo)),
 					httpmock.StringResponse("[]"))
 			},
-			wantOut: "Refreshing run status every 3 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/OWNER/REPO/actions/runs/123\n\n\nJOBS\n✓ build in 1m59s (ID 123)\n  ✓ Run actions/checkout@v2\n  ✓ Test\n",
+			wantOut: "Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/OWNER/REPO/actions/runs/123\n\n\nJOBS\n✓ build in 1m59s (ID 123)\n  ✓ Run actions/checkout@v2\n  ✓ Test\n",
 		}, {
 			name: "malformed JSON response",
 			opts: &repositoryDispatchOptions{
