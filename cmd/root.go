@@ -16,9 +16,8 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolP("silent", "s", false, "Do not watch the resulting GitHub Actions run")
 	// TODO: how to make this required?
-	rootCmd.PersistentFlags().StringP("repo", "r", "", "The targeted repository's full name (in 'owner/repo' format)")
+	rootCmd.PersistentFlags().StringP("repo", "R", "", "The targeted repository's full name (in 'owner/repo' format)")
 }
 
 // Execute executes the root command.

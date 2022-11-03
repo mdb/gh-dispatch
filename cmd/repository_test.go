@@ -21,18 +21,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 		wantOut   string
 	}{
 		{
-			name: "no specified workflow",
-			opts: &repositoryDispatchOptions{
-				eventType: "hello",
-			},
-			httpStubs: func(reg *httpmock.Registry) {
-				reg.Register(
-					httpmock.REST("POST", fmt.Sprintf("repos/%s/dispatches", repo)),
-					httpmock.StringResponse("{}"))
-			},
-			wantOut: "",
-		}, {
-			name: "specified workflow",
+			name: "successful workflow run",
 			opts: &repositoryDispatchOptions{
 				eventType: "hello",
 				workflow:  "foo",

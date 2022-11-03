@@ -84,10 +84,6 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	if opts.workflow == "" {
-		return nil
-	}
-
 	runID, err := getRunID(client, opts.repo, "repository_dispatch")
 	if err != nil {
 		return err
@@ -107,6 +103,7 @@ func init() {
 	repositoryCmd.Flags().StringVarP(&repositoryClientPayload, "client-payload", "p", "", "The repository dispatch event client payload JSON string.")
 	repositoryCmd.MarkFlagRequired("client-payload")
 	repositoryCmd.Flags().StringVarP(&repositoryWorkflow, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
+	repositoryCmd.MarkFlagRequired("workflow")
 
 	rootCmd.AddCommand(repositoryCmd)
 }

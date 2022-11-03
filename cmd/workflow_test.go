@@ -22,7 +22,7 @@ func TestWorkflowDispatchRun(t *testing.T) {
 		wantOut   string
 	}{
 		{
-			name: "basic usage",
+			name: "successful workflow run",
 			opts: &workflowDispatchOptions{
 				inputs:   `{"foo": "bar"}`,
 				workflow: workflow,
