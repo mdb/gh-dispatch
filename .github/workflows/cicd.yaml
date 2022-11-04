@@ -28,6 +28,8 @@ jobs:
     # TODO: it may make more sense for these to run against the compiled binary
     - name: Acceptance test
       run: make acc-test
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-and-publish-release:
     # TODO: enable when initial prototyping is complete
