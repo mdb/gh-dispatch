@@ -16,12 +16,25 @@ jobs:
     - name: Ensure unique version
       run: make check-tag
 
+  acceptance-test:
+    runs-on: ubuntu-latest
+    needs: build-snapshot
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+    # TODO: it may make more sense for these to run against the compiled binary
+    - name: Acceptance test
+      run: make acc-test
+
   build-and-publish-release:
     # TODO: enable when initial prototyping is complete
     if: false
     # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    needs: build-snapshot
+    needs: acceptance-test
     environment:
       name: release
     steps:
