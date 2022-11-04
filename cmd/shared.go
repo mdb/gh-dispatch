@@ -57,7 +57,7 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 	for run.Status != shared.Completed {
 		// Write to a temporary buffer to reduce total number of fetches
 		var err error
-		run, err = renderRun(out, ios, client, repo, run, annotationCache)
+		run, err = renderRun(out, cs, client, repo, run, annotationCache)
 		if err != nil {
 			return err
 		}
@@ -105,9 +105,7 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 	return nil
 }
 
-func renderRun(out io.Writer, io *iostreams.IOStreams, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
-	cs := io.ColorScheme()
-
+func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
 	run, err := getRun(client, repo, run.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get run: %w", err)
