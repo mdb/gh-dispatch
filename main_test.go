@@ -101,7 +101,7 @@ func TestRepositoryAcceptance(t *testing.T) {
 			"\n  ✓ Complete job\n",
 		},
 		wantErr: true,
-		errMsg:  "SilentError",
+		errMsg:  "exit status 1",
 	}}
 
 	for _, test := range tests {
