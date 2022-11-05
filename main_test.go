@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -119,6 +120,13 @@ func TestRepositoryAcceptance(t *testing.T) {
 					t.Errorf("expected stdout to include:\n%q\ngot:\n%q", out, got)
 				}
 			}
+
+			// sleep for 2s so that each test fetches the correct run ID
+			// Until https://github.com/mdb/gh-dispatch/issues/9 is addressed, `gh dispatch`
+			// does not reliably find the correct workflow run correctly corresponding to
+			// the dispatch event triggered by `gh dispatch`.
+			duration, _ := time.ParseDuration("2s")
+			time.Sleep(duration)
 		})
 	}
 }

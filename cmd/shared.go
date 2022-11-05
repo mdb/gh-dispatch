@@ -42,9 +42,8 @@ func getRunID(client api.RESTClient, repo, event string, workflowID int64) (int6
 
 		// TODO: match on workflow name, or somehow more accurately ensure we are fetching
 		// _the_ workflow triggered by the `gh dispatch` command.
-		//b, _ := json.Marshal(wRuns.WorkflowRuns[0])
-		//fmt.Println(string(b))
 		for _, run := range wRuns.WorkflowRuns {
+			// TODO: should this also try to match on run.triggering_actor.login?
 			if run.Status != shared.Completed && run.WorkflowID == int(workflowID) {
 				return run.ID, nil
 			}
