@@ -91,8 +91,16 @@ func TestRepositoryAcceptance(t *testing.T) {
 			"--workflow=Hello",
 		},
 		wantOut: []string{
-			"TODO",
+			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
+			"JOBS\n* hello (ID",
+			")\n  ✓ Set up job",
+			"\n  ✓ Run actions/checkout@v3",
+			"\n  X say-hello",
+			"\n  ✓ Post Run actions/checkout@v3\n",
+			"\n  ✓ Complete job\n",
 		},
+		wantErr: true,
+		errMsg:  "SilentError",
 	}}
 
 	for _, test := range tests {
