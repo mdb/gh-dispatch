@@ -2,9 +2,9 @@
 
 # gh-dispatch
 
-`gh-dispatch` is a [gh CLI](https://cli.github.com/) extension for triggering [repository_dispatch](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) and/or
-[workflow_dispatch](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch) events and watching the resulting GitHub Actions workflow run via
-a single command.
+A [gh CLI](https://cli.github.com/) extension for triggering [repository_dispatch](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) and/or
+[workflow_dispatch](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch) events and watching the resulting GitHub Actions
+workflow run.
 
 ![demo](demo.gif)
 
@@ -15,9 +15,9 @@ Trigger a repository dispatch event and watch the resulting GitHub Actions run f
 ```
 gh dispatch repository \
   --repo "mdb/gh-dispatch" \
+  --workflow "Hello" \
   --event-type "hello" \
-  --client-payload "{\"name\": \"mike\"}" \
-  --workflow "Hello"'
+  --client-payload '{"name": "mike"}'
 ```
 
 Trigger a workflow dispatch event and watch the resulting GitHub Actions run from your terminal:
@@ -25,8 +25,8 @@ Trigger a workflow dispatch event and watch the resulting GitHub Actions run fro
 ```
 gh dispatch workflow \
   --repo "mdb/gh-dispatch" \
-  --inputs "{\"name\": \"mike\", "force_fail": "false"}' \
-  --workflow workflow_dispatch.yaml
+  --workflow "workflow_dispatch.yaml" \
+  --inputs '{"name": "mike"}'
 ```
 
 ## Installation
@@ -37,7 +37,7 @@ Install the `gh` CLI [for your platform](https://github.com/cli/cli#installation
 brew install gh
 ```
 
-Install the latest `dispatch` extension from [its pre-compiled releases](https://github.com/mdb/gh-dispatch/releases):
+Install the latest `dispatch` extension from [its releases](https://github.com/mdb/gh-dispatch/releases):
 
 ```
 gh extension install mdb/gh-dispatch
@@ -51,8 +51,14 @@ Build and test `gh-dispatch` locally:
 make
 ```
 
-Install a locally built `gh-dispatch`, thus making it available `gh dispatch`:
+Install a locally built `gh-dispatch` for use as `gh dispatch`:
 
 ```
 make install
+```
+
+Run acceptance tests against a local `gh-dispatch` installation:
+
+```
+make acc-test
 ```
