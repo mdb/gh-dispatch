@@ -33,19 +33,25 @@ func TestRootAcceptance(t *testing.T) {
 		errMsg  string
 		wantErr bool
 	}{{
-		args:    []string{""},
+		args:    []string{"dispatch"},
 		wantOut: basicOut,
 	}, {
-		args:    []string{"--help"},
+		args: []string{
+			"dispatch",
+			"--help",
+		},
 		wantOut: basicOut,
 	}, {
-		args:    []string{"help"},
+		args: []string{
+			"dispatch",
+			"help",
+		},
 		wantOut: basicOut,
 	}}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("when 'gh dispatch' is passed '%s'", strings.Join(test.args, " ")), func(t *testing.T) {
-			output, err := exec.Command("./gh-dispatch", test.args...).CombinedOutput()
+		t.Run(fmt.Sprintf("when passed '%s'", strings.Join(test.args, " ")), func(t *testing.T) {
+			output, err := exec.Command("gh", test.args...).CombinedOutput()
 
 			if test.wantErr {
 				assert.EqualError(t, err, test.errMsg)
@@ -68,6 +74,7 @@ func TestRepositoryAcceptance(t *testing.T) {
 		wantErr bool
 	}{{
 		args: []string{
+			"dispatch",
 			"repository",
 			"--repo=mdb/gh-dispatch",
 			"--event-type=hello",
@@ -85,6 +92,7 @@ func TestRepositoryAcceptance(t *testing.T) {
 		},
 	}, {
 		args: []string{
+			"dispatch",
 			"repository",
 			"--repo=mdb/gh-dispatch",
 			"--event-type=hello",
@@ -105,8 +113,8 @@ func TestRepositoryAcceptance(t *testing.T) {
 	}}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("when 'gh dispatch' is passed '%s'", strings.Join(test.args, " ")), func(t *testing.T) {
-			output, err := exec.Command("./gh-dispatch", test.args...).CombinedOutput()
+		t.Run(fmt.Sprintf("when passed '%s'", strings.Join(test.args, " ")), func(t *testing.T) {
+			output, err := exec.Command("gh", test.args...).CombinedOutput()
 
 			if test.wantErr {
 				assert.EqualError(t, err, test.errMsg)
@@ -139,6 +147,7 @@ func TestWorkflowAcceptance(t *testing.T) {
 		wantErr bool
 	}{{
 		args: []string{
+			"dispatch",
 			"workflow",
 			"--repo=mdb/gh-dispatch",
 			`--inputs={"name": "Mike", "force_fail": "false"}`,
@@ -146,7 +155,7 @@ func TestWorkflowAcceptance(t *testing.T) {
 		},
 		wantOut: []string{
 			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
-			"JOBS\n* hello (ID",
+			"JOBS\n* goodbye (ID",
 			")\n  ✓ Set up job",
 			"\n  ✓ Run actions/checkout@v3",
 			"\n  ✓ say-goodbye",
@@ -155,6 +164,7 @@ func TestWorkflowAcceptance(t *testing.T) {
 		},
 	}, {
 		args: []string{
+			"dispatch",
 			"workflow",
 			"--repo=mdb/gh-dispatch",
 			`--inputs={"name": "Mike", "force_fail": "true"}`,
@@ -162,7 +172,7 @@ func TestWorkflowAcceptance(t *testing.T) {
 		},
 		wantOut: []string{
 			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
-			"JOBS\n* hello (ID",
+			"JOBS\n* goodbye (ID",
 			")\n  ✓ Set up job",
 			"\n  ✓ Run actions/checkout@v3",
 			"\n  X say-goodbye",
@@ -174,8 +184,8 @@ func TestWorkflowAcceptance(t *testing.T) {
 	}}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("when 'gh dispatch' is passed '%s'", strings.Join(test.args, " ")), func(t *testing.T) {
-			output, err := exec.Command("./gh-dispatch", test.args...).CombinedOutput()
+		t.Run(fmt.Sprintf("when passed '%s'", strings.Join(test.args, " ")), func(t *testing.T) {
+			output, err := exec.Command("gh", test.args...).CombinedOutput()
 
 			if test.wantErr {
 				assert.EqualError(t, err, test.errMsg)

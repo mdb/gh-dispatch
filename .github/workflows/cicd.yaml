@@ -5,7 +5,7 @@ on: [push, pull_request]
 concurrency: cicd
 
 jobs:
-  build-snapshot:
+  build-and-test-snapshot:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -15,30 +15,21 @@ jobs:
         go-version-file: go.mod
     - name: Build
       run: make
-    - name: Ensure unique version
-      run: make check-tag
-
-  acceptance-test:
-    runs-on: ubuntu-latest
-    needs: build-snapshot
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version-file: go.mod
-    # TODO: it may make more sense for these to run against the compiled binary
+    - name: Install gh dispatch
+      run: make install
     - name: Acceptance test
       run: make acc-test
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Ensure unique version
+      run: make check-tag
 
   build-and-publish-release:
     # TODO: enable when initial prototyping is complete
     if: false
     # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    needs: acceptance-test
+    needs: build-and-test-snapshot
     environment:
       name: release
     steps:
