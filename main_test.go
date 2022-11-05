@@ -130,3 +130,72 @@ func TestRepositoryAcceptance(t *testing.T) {
 		})
 	}
 }
+
+func TestWorkflowAcceptance(t *testing.T) {
+	tests := []struct {
+		args    []string
+		wantOut []string
+		errMsg  string
+		wantErr bool
+	}{{
+		args: []string{
+			"workflow",
+			"--repo=mdb/gh-dispatch",
+			`--inputs={"name": "Mike", "force_fail": "false"}`,
+			"--workflow=workflow_dispatch.yaml",
+		},
+		wantOut: []string{
+			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
+			"JOBS\n* hello (ID",
+			")\n  ✓ Set up job",
+			"\n  ✓ Run actions/checkout@v3",
+			"\n  ✓ say-goodbye",
+			"\n  ✓ Post Run actions/checkout@v3\n",
+			"\n  ✓ Complete job\n",
+		},
+	}, {
+		args: []string{
+			"workflow",
+			"--repo=mdb/gh-dispatch",
+			`--inputs={"name": "Mike", "force_fail": "true"}`,
+			"--workflow=workflow_dispatch.yaml",
+		},
+		wantOut: []string{
+			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
+			"JOBS\n* hello (ID",
+			")\n  ✓ Set up job",
+			"\n  ✓ Run actions/checkout@v3",
+			"\n  X say-goodbye",
+			"\n  ✓ Post Run actions/checkout@v3\n",
+			"\n  ✓ Complete job\n",
+		},
+		wantErr: true,
+		errMsg:  "exit status 1",
+	}}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("when 'gh dispatch' is passed '%s'", strings.Join(test.args, " ")), func(t *testing.T) {
+			output, err := exec.Command("./gh-dispatch", test.args...).CombinedOutput()
+
+			if test.wantErr {
+				assert.EqualError(t, err, test.errMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			got := string(output)
+			for _, out := range test.wantOut {
+				if !strings.Contains(got, out) {
+					t.Errorf("expected stdout to include:\n%q\ngot:\n%q", out, got)
+				}
+			}
+
+			// sleep for 2s so that each test fetches the correct run ID
+			// Until https://github.com/mdb/gh-dispatch/issues/9 is addressed, `gh dispatch`
+			// does not reliably find the correct workflow run correctly corresponding to
+			// the dispatch event triggered by `gh dispatch`.
+			duration, _ := time.ParseDuration("2s")
+			time.Sleep(duration)
+		})
+	}
+}
