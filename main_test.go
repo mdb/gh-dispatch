@@ -1,10 +1,15 @@
+//go:build acceptance
+// +build acceptance
+
 package main
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,27 +25,33 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestCommand(t *testing.T) {
+func TestRootAcceptance(t *testing.T) {
 	basicOut := "gh dispatch: Trigger a GitHub dispatch event and watch the resulting GitHub Actions run\n\nUsage:\n  gh [command]\n\nExamples:\nTODO\n\nAvailable Commands:\n  completion  Generate the autocompletion script for the specified shell\n  help        Help about any command\n  repository  The 'repository' subcommand triggers repository dispatch events\n  workflow    The 'workflow' subcommand triggers workflow dispatch events\n\nFlags:\n  -h, --help          help for gh\n  -R, --repo string   The targeted repository's full name (in 'owner/repo' format)\n  -v, --version       version for gh\n\nUse \"gh [command] --help\" for more information about a command.\n"
 	tests := []struct {
-		arg     string
+		args    []string
 		wantOut string
 		errMsg  string
 		wantErr bool
 	}{{
-		arg:     "",
+		args:    []string{"dispatch"},
 		wantOut: basicOut,
 	}, {
-		arg:     "--help",
+		args: []string{
+			"dispatch",
+			"--help",
+		},
 		wantOut: basicOut,
 	}, {
-		arg:     "help",
+		args: []string{
+			"dispatch",
+			"help",
+		},
 		wantOut: basicOut,
 	}}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("when 'gh dispatch' is passed '%s'", test.arg), func(t *testing.T) {
-			output, err := exec.Command("./gh-dispatch", test.arg).CombinedOutput()
+		t.Run(fmt.Sprintf("when passed '%s'", strings.Join(test.args, " ")), func(t *testing.T) {
+			output, err := exec.Command("gh", test.args...).CombinedOutput()
 
 			if test.wantErr {
 				assert.EqualError(t, err, test.errMsg)
@@ -51,6 +62,150 @@ func TestCommand(t *testing.T) {
 			if got := string(output); got != test.wantOut {
 				t.Errorf("got stdout:\n%q\nwant:\n%q", got, test.wantOut)
 			}
+		})
+	}
+}
+
+func TestRepositoryAcceptance(t *testing.T) {
+	tests := []struct {
+		args    []string
+		wantOut []string
+		errMsg  string
+		wantErr bool
+	}{{
+		args: []string{
+			"dispatch",
+			"repository",
+			"--repo=mdb/gh-dispatch",
+			"--event-type=hello",
+			`--client-payload={"name": "Mike"}`,
+			"--workflow=Hello",
+		},
+		wantOut: []string{
+			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
+			"JOBS\n* hello (ID",
+			")\n  ✓ Set up job",
+			"\n  ✓ Run actions/checkout@v3",
+			"\n  ✓ say-hello",
+			"\n  ✓ Post Run actions/checkout@v3\n",
+			"\n  ✓ Complete job\n",
+		},
+	}, {
+		args: []string{
+			"dispatch",
+			"repository",
+			"--repo=mdb/gh-dispatch",
+			"--event-type=hello",
+			`--client-payload={"force_fail": true}`,
+			"--workflow=Hello",
+		},
+		wantOut: []string{
+			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
+			"JOBS\n* hello (ID",
+			")\n  ✓ Set up job",
+			"\n  ✓ Run actions/checkout@v3",
+			"\n  X say-hello",
+			"\n  ✓ Post Run actions/checkout@v3\n",
+			"\n  ✓ Complete job\n",
+		},
+		wantErr: true,
+		errMsg:  "exit status 1",
+	}}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("when passed '%s'", strings.Join(test.args, " ")), func(t *testing.T) {
+			output, err := exec.Command("gh", test.args...).CombinedOutput()
+
+			if test.wantErr {
+				assert.EqualError(t, err, test.errMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			got := string(output)
+			for _, out := range test.wantOut {
+				if !strings.Contains(got, out) {
+					t.Errorf("expected stdout to include:\n%q\ngot:\n%q", out, got)
+				}
+			}
+
+			// sleep for 2s so that each test fetches the correct run ID
+			// Until https://github.com/mdb/gh-dispatch/issues/9 is addressed, `gh dispatch`
+			// does not reliably find the correct workflow run correctly corresponding to
+			// the dispatch event triggered by `gh dispatch`.
+			duration, _ := time.ParseDuration("2s")
+			time.Sleep(duration)
+		})
+	}
+}
+
+func TestWorkflowAcceptance(t *testing.T) {
+	tests := []struct {
+		args    []string
+		wantOut []string
+		errMsg  string
+		wantErr bool
+	}{{
+		args: []string{
+			"dispatch",
+			"workflow",
+			"--repo=mdb/gh-dispatch",
+			`--inputs={"name": "Mike", "force_fail": "false"}`,
+			"--workflow=workflow_dispatch.yaml",
+		},
+		wantOut: []string{
+			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
+			"JOBS\n* goodbye (ID",
+			")\n  ✓ Set up job",
+			"\n  ✓ Run actions/checkout@v3",
+			"\n  ✓ say-goodbye",
+			"\n  ✓ Post Run actions/checkout@v3\n",
+			"\n  ✓ Complete job\n",
+		},
+	}, {
+		args: []string{
+			"dispatch",
+			"workflow",
+			"--repo=mdb/gh-dispatch",
+			`--inputs={"name": "Mike", "force_fail": "true"}`,
+			"--workflow=workflow_dispatch.yaml",
+		},
+		wantOut: []string{
+			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
+			"JOBS\n* goodbye (ID",
+			")\n  ✓ Set up job",
+			"\n  ✓ Run actions/checkout@v3",
+			"\n  X say-goodbye",
+			"\n  ✓ Post Run actions/checkout@v3\n",
+			"\n  ✓ Complete job\n",
+		},
+		wantErr: true,
+		errMsg:  "exit status 1",
+	}}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("when passed '%s'", strings.Join(test.args, " ")), func(t *testing.T) {
+			output, err := exec.Command("gh", test.args...).CombinedOutput()
+
+			if test.wantErr {
+				assert.EqualError(t, err, test.errMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			got := string(output)
+			for _, out := range test.wantOut {
+				if !strings.Contains(got, out) {
+					t.Errorf("expected stdout to include:\n%q\ngot:\n%q", out, got)
+				}
+			}
+
+			// sleep for 2s so that each test fetches the correct run ID
+			// Until https://github.com/mdb/gh-dispatch/issues/9 is addressed, `gh dispatch`
+			// does not reliably find the correct workflow run correctly corresponding to
+			// the dispatch event triggered by `gh dispatch`.
+			duration, _ := time.ParseDuration("2s")
+			time.Sleep(duration)
 		})
 	}
 }

@@ -32,7 +32,7 @@ type dispatchOptions struct {
 	authToken     string
 }
 
-func getRunID(client api.RESTClient, repo, event string) (int64, error) {
+func getRunID(client api.RESTClient, repo, event string, workflowID int64) (int64, error) {
 	for {
 		var wRuns workflowRunsResponse
 		err := client.Get(fmt.Sprintf("repos/%s/actions/runs?event=%s", repo, event), &wRuns)
@@ -42,8 +42,11 @@ func getRunID(client api.RESTClient, repo, event string) (int64, error) {
 
 		// TODO: match on workflow name, or somehow more accurately ensure we are fetching
 		// _the_ workflow triggered by the `gh dispatch` command.
-		if wRuns.WorkflowRuns[0].Status != shared.Completed {
-			return wRuns.WorkflowRuns[0].ID, nil
+		for _, run := range wRuns.WorkflowRuns {
+			// TODO: should this also try to match on run.triggering_actor.login?
+			if run.Status != shared.Completed && run.WorkflowID == int(workflowID) {
+				return run.ID, nil
+			}
 		}
 	}
 }
@@ -57,13 +60,9 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 	for run.Status != shared.Completed {
 		// Write to a temporary buffer to reduce total number of fetches
 		var err error
-		run, err = renderRun(out, ios, client, repo, run, annotationCache)
+		run, err = renderRun(out, cs, client, repo, run, annotationCache)
 		if err != nil {
 			return err
-		}
-
-		if run.Status == shared.Completed {
-			break
 		}
 
 		// If not completed, refresh the screen buffer and write the temporary buffer to stdout
@@ -105,9 +104,7 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 	return nil
 }
 
-func renderRun(out io.Writer, io *iostreams.IOStreams, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
-	cs := io.ColorScheme()
-
+func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
 	run, err := getRun(client, repo, run.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get run: %w", err)

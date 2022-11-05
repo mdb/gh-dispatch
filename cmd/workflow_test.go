@@ -33,6 +33,10 @@ func TestWorkflowDispatchRun(t *testing.T) {
 					httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
 					httpmock.StringResponse("{}"))
 
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/workflow.yaml", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
+
 				v := url.Values{}
 				v.Set("event", "workflow_dispatch")
 
@@ -49,20 +53,10 @@ func TestWorkflowDispatchRun(t *testing.T) {
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
-						"id": 123
-					}`))
-
-				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
-					httpmock.StringResponse(`{
 						"id": 123,
 						"status": "completed",
 						"conclusion": "success"
 					}`))
-
-				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
-					httpmock.StringResponse(getJobsResponse))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
@@ -85,18 +79,16 @@ func TestWorkflowDispatchRun(t *testing.T) {
 					httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
 					httpmock.StringResponse("{}"))
 
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/workflow.yaml", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
+
 				v := url.Values{}
 				v.Set("event", "workflow_dispatch")
 
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/runs", repo), v),
 					httpmock.StringResponse(getWorkflowRunsResponse))
-
-				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
-					httpmock.StringResponse(`{
-						"id": 123
-					}`))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
@@ -115,10 +107,6 @@ func TestWorkflowDispatchRun(t *testing.T) {
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
 					httpmock.StringResponse(getFailingJobsResponse))
-
-				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
-					httpmock.StringResponse(getJobsResponse))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/check-runs/123/annotations", repo)),
