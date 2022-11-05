@@ -51,7 +51,7 @@ release: tools
 .PHONY: release
 
 # TODO: dynamically set architecture, which is currently hard-coded to amd64
-install: build
+install:
 	cp dist/gh-dispatch_$(shell echo $(shell uname) | tr '[:upper:]' '[:lower:]')_amd64/gh-dispatch ~/.local/share/gh/extensions/gh-dispatch/
 .PHONY: install
 
