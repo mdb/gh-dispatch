@@ -51,8 +51,9 @@ release: tools
 .PHONY: release
 
 # TODO: dynamically set architecture, which is currently hard-coded to amd64
+# And why is a dist/gh-dispatch_linux_amd64_v1/gh-dispatch (note the _v1) produced in GHA?
 install:
-	cp dist/gh-dispatch_$(shell echo $(shell uname) | tr '[:upper:]' '[:lower:]')_amd64/gh-dispatch ~/.local/share/gh/extensions/gh-dispatch/
+	cp dist/gh-dispatch_$(shell echo $(shell uname) | tr '[:upper:]' '[:lower:]')_amd64*/gh-dispatch ~/.local/share/gh/extensions/gh-dispatch/
 .PHONY: install
 
 demo:
