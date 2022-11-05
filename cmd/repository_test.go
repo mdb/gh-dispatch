@@ -47,20 +47,10 @@ func TestRepositoryDispatchRun(t *testing.T) {
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
-						"id": 123
-					}`))
-
-				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
-					httpmock.StringResponse(`{
 						"id": 123,
 						"status": "completed",
 						"conclusion": "success"
 					}`))
-
-				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
-					httpmock.StringResponse(getJobsResponse))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
@@ -99,20 +89,10 @@ func TestRepositoryDispatchRun(t *testing.T) {
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
-						"id": 123
-					}`))
-
-				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
-					httpmock.StringResponse(`{
 						"id": 123,
 						"status": "completed",
 						"conclusion": "failure"
 					}`))
-
-				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
-					httpmock.StringResponse(getFailingJobsResponse))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),

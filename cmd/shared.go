@@ -62,10 +62,6 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 			return err
 		}
 
-		if run.Status == shared.Completed {
-			break
-		}
-
 		// If not completed, refresh the screen buffer and write the temporary buffer to stdout
 		ios.RefreshScreen()
 
