@@ -33,6 +33,10 @@ func TestWorkflowDispatchRun(t *testing.T) {
 					httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
 					httpmock.StringResponse("{}"))
 
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/workflow.yaml", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
+
 				v := url.Values{}
 				v.Set("event", "workflow_dispatch")
 
@@ -74,6 +78,10 @@ func TestWorkflowDispatchRun(t *testing.T) {
 				reg.Register(
 					httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
 					httpmock.StringResponse("{}"))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/workflow.yaml", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
 
 				v := url.Values{}
 				v.Set("event", "workflow_dispatch")

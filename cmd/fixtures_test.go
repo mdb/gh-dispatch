@@ -1,6 +1,18 @@
 package cmd
 
 var (
+	getWorkflowsResponse string = `{
+		"total_count": 1,
+		"workflows": [{
+			"id": 456,
+			"name": "foo"
+		}]
+	}`
+
+	getWorkflowResponse string = `{
+		"id": 456
+	}`
+
 	getWorkflowRunsResponse string = `{
 		"total_count": 1,
 		"workflow_runs": [{

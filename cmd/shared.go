@@ -32,7 +32,7 @@ type dispatchOptions struct {
 	authToken     string
 }
 
-func getRunID(client api.RESTClient, repo, event string) (int64, error) {
+func getRunID(client api.RESTClient, repo, event string, workflowID int64) (int64, error) {
 	for {
 		var wRuns workflowRunsResponse
 		err := client.Get(fmt.Sprintf("repos/%s/actions/runs?event=%s", repo, event), &wRuns)
@@ -42,8 +42,12 @@ func getRunID(client api.RESTClient, repo, event string) (int64, error) {
 
 		// TODO: match on workflow name, or somehow more accurately ensure we are fetching
 		// _the_ workflow triggered by the `gh dispatch` command.
-		if wRuns.WorkflowRuns[0].Status != shared.Completed {
-			return wRuns.WorkflowRuns[0].ID, nil
+		//b, _ := json.Marshal(wRuns.WorkflowRuns[0])
+		//fmt.Println(string(b))
+		for _, run := range wRuns.WorkflowRuns {
+			if run.Status != shared.Completed && run.WorkflowID == int(workflowID) {
+				return run.ID, nil
+			}
 		}
 	}
 }

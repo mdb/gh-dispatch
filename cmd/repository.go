@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cli/cli/v2/pkg/cmd/workflow/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
@@ -84,7 +85,21 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	runID, err := getRunID(client, opts.repo, "repository_dispatch")
+	var wfs shared.WorkflowsPayload
+	err = client.Get(fmt.Sprintf("repos/%s/actions/workflows", opts.repo), &wfs)
+	if err != nil {
+		return err
+	}
+
+	var workflowID int64
+	for _, wf := range wfs.Workflows {
+		if wf.Name == opts.workflow {
+			workflowID = wf.ID
+			break
+		}
+	}
+
+	runID, err := getRunID(client, opts.repo, "repository_dispatch", workflowID)
 	if err != nil {
 		return err
 	}
