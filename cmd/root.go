@@ -3,15 +3,18 @@ package cmd
 import (
 	"os"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
 )
 
 // rootCmd is the root command.
 var rootCmd = &cobra.Command{
-	Use:          "gh dispatch",
-	Short:        "gh dispatch: Trigger a GitHub dispatch event and watch the resulting GitHub Actions run",
-	Long:         "gh dispatch: Trigger a GitHub dispatch event and watch the resulting GitHub Actions run",
-	Example:      "TODO",
+	Use:   "gh dispatch",
+	Short: "Send a GitHub dispatch event and watch the resulting GitHub Actions run",
+	Long: heredoc.Doc(`
+		Send a workflow_dispatch or repository_dispatch event and watch the resulting
+		GitHub Actions run.
+	`),
 	SilenceUsage: true,
 }
 
