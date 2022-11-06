@@ -27,26 +27,25 @@ func TestMain(m *testing.M) {
 }
 
 func TestRootAcceptance(t *testing.T) {
-	basicOut := heredoc.Doc(`
-	Send a workflow_dispatch or repository_dispatch event and watch the resulting
-	GitHub Actions run.
+	basicOut := heredoc.Doc(`Send a workflow_dispatch or repository_dispatch event and watch the resulting
+GitHub Actions run.
 
-	Usage:
-		gh [command]
+Usage:
+  gh [command]
 
-	Available Commands:
-		completion  Generate the autocompletion script for the specified shell
-		help        Help about any command
-		repository  Send a repository dispatch event and watch the resulting GitHub Actions run
-		workflow    Send a workflow dispatch event and watch the resulting GitHub Actions run
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  repository  Send a repository dispatch event and watch the resulting GitHub Actions run
+  workflow    Send a workflow dispatch event and watch the resulting GitHub Actions run
 
-	Flags:
-		-h, --help          help for gh
-		-R, --repo string   The targeted repository's full name (in 'owner/repo' format)
-		-v, --version       version for gh
+Flags:
+  -h, --help          help for gh
+  -R, --repo string   The targeted repository's full name (in 'owner/repo' format)
+  -v, --version       version for gh
 
-	Use "gh [command] --help" for more information about a command.
-	`)
+Use "gh [command] --help" for more information about a command.
+`)
 	tests := []struct {
 		args    []string
 		wantOut string
