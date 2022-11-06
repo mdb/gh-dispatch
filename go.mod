@@ -3,6 +3,7 @@ module github.com/mdb/gh-dispatch
 go 1.19
 
 require (
+	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/cli/cli/v2 v2.18.1
 	github.com/cli/go-gh v0.1.2
 	github.com/spf13/cobra v1.6.0
