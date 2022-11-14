@@ -26,14 +26,14 @@ type repositoryDispatchOptions struct {
 	dispatchOptions
 }
 
-var (
-	repositoryEventType     string
-	repositoryClientPayload string
-	repositoryWorkflow      string
-)
-
 func NewCmdRepository() *cobra.Command {
-	return &cobra.Command{
+	var (
+		repositoryEventType     string
+		repositoryClientPayload string
+		repositoryWorkflow      string
+	)
+
+	cmd := &cobra.Command{
 		Use: heredoc.Doc(`
 		repository \
 			--repo [owner/repo] \
@@ -81,6 +81,15 @@ func NewCmdRepository() *cobra.Command {
 			})
 		},
 	}
+
+	cmd.Flags().StringVarP(&repositoryEventType, "event-type", "e", "", "The repository dispatch event type.")
+	cmd.MarkFlagRequired("event-type")
+	cmd.Flags().StringVarP(&repositoryClientPayload, "client-payload", "p", "", "The repository dispatch event client payload JSON string.")
+	cmd.MarkFlagRequired("client-payload")
+	cmd.Flags().StringVarP(&repositoryWorkflow, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
+	cmd.MarkFlagRequired("workflow")
+
+	return cmd
 }
 
 func repositoryDispatchRun(opts *repositoryDispatchOptions) error {

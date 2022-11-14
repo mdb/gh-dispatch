@@ -26,14 +26,14 @@ type workflowDispatchOptions struct {
 	dispatchOptions
 }
 
-var (
-	workflowInputs string
-	workflowName   string
-	workflowRef    string
-)
-
 func NewCmdWorkflow() *cobra.Command {
-	return &cobra.Command{
+	var (
+		workflowInputs string
+		workflowName   string
+		workflowRef    string
+	)
+
+	cmd := &cobra.Command{
 		Use: heredoc.Doc(`
 		workflow \
 			--repo [owner/repo] \
@@ -86,6 +86,20 @@ func NewCmdWorkflow() *cobra.Command {
 			})
 		},
 	}
+
+	// TODO: how does the 'gh run' command represent inputs?
+	// Is it worth better emulating its interface?
+	cmd.Flags().StringVarP(&workflowInputs, "inputs", "i", "", "The workflow dispatch inputs JSON string.")
+	cmd.MarkFlagRequired("inputs")
+	// TODO: how does the 'gh run' command represent workflow?
+	// Is it worth better emulating its interface?
+	cmd.Flags().StringVarP(&workflowName, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
+	cmd.MarkFlagRequired("workflow")
+	// TODO: how does the 'gh run' command represent ref?
+	// Is it worth better emulating its interface?
+	cmd.Flags().StringVarP(&workflowRef, "ref", "f", "main", "The git reference for the workflow. Can be a branch or tag name.")
+
+	return cmd
 }
 
 func workflowDispatchRun(opts *workflowDispatchOptions) error {
