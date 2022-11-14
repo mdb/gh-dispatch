@@ -1,4 +1,4 @@
-package cmd
+package dispatch
 
 import (
 	"bytes"
@@ -26,23 +26,23 @@ type repositoryDispatchOptions struct {
 	dispatchOptions
 }
 
-var (
-	repositoryEventType     string
-	repositoryClientPayload string
-	repositoryWorkflow      string
-)
+func NewCmdRepository() *cobra.Command {
+	var (
+		repositoryEventType     string
+		repositoryClientPayload string
+		repositoryWorkflow      string
+	)
 
-// repositoryCmd represents the repository subcommand
-var repositoryCmd = &cobra.Command{
-	Use: heredoc.Doc(`
+	cmd := &cobra.Command{
+		Use: heredoc.Doc(`
 		repository \
 			--repo [owner/repo] \
 			--event-type [event-type] \
 			--client-payload [json-string] \
 			--workflow [workflow-name]
 	`),
-	Short: "Send a repository dispatch event and watch the resulting GitHub Actions run",
-	Long: heredoc.Doc(`
+		Short: "Send a repository dispatch event and watch the resulting GitHub Actions run",
+		Long: heredoc.Doc(`
 		This command sends a repository dispatch event and attempts to find and watch the
 		resulting GitHub Actions run whose name is specified as '--workflow'.
 
@@ -51,35 +51,45 @@ var repositoryCmd = &cobra.Command{
 		watch an unrelated GitHub Actions workflow run in the event that multiple runs of
 		the specified workflow are running concurrently.
 	`),
-	Example: heredoc.Doc(`
+		Example: heredoc.Doc(`
 		gh dispatch repository \
 			--repo mdb/gh-dispatch \
 			--event-type 'hello' \
 			--client-payload '{"name": "Mike"}' \
 			--workflow Hello
 	`),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		repo, _ := cmd.Flags().GetString("repo")
+		RunE: func(cmd *cobra.Command, args []string) error {
+			repo, _ := cmd.Flags().GetString("repo")
 
-		b := []byte(repositoryClientPayload)
-		var repoClientPayload interface{}
-		json.Unmarshal(b, &repoClientPayload)
+			b := []byte(repositoryClientPayload)
+			var repoClientPayload interface{}
+			json.Unmarshal(b, &repoClientPayload)
 
-		ios := iostreams.System()
+			ios := iostreams.System()
 
-		dOptions := dispatchOptions{
-			repo:          repo,
-			httpTransport: http.DefaultTransport,
-			io:            ios,
-		}
+			dOptions := dispatchOptions{
+				repo:          repo,
+				httpTransport: http.DefaultTransport,
+				io:            ios,
+			}
 
-		return repositoryDispatchRun(&repositoryDispatchOptions{
-			clientPayload:   repoClientPayload,
-			eventType:       repositoryEventType,
-			workflow:        repositoryWorkflow,
-			dispatchOptions: dOptions,
-		})
-	},
+			return repositoryDispatchRun(&repositoryDispatchOptions{
+				clientPayload:   repoClientPayload,
+				eventType:       repositoryEventType,
+				workflow:        repositoryWorkflow,
+				dispatchOptions: dOptions,
+			})
+		},
+	}
+
+	cmd.Flags().StringVarP(&repositoryEventType, "event-type", "e", "", "The repository dispatch event type.")
+	cmd.MarkFlagRequired("event-type")
+	cmd.Flags().StringVarP(&repositoryClientPayload, "client-payload", "p", "", "The repository dispatch event client payload JSON string.")
+	cmd.MarkFlagRequired("client-payload")
+	cmd.Flags().StringVarP(&repositoryWorkflow, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
+	cmd.MarkFlagRequired("workflow")
+
+	return cmd
 }
 
 func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
@@ -131,15 +141,4 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	}
 
 	return render(opts.io, client, opts.repo, run)
-}
-
-func init() {
-	repositoryCmd.Flags().StringVarP(&repositoryEventType, "event-type", "e", "", "The repository dispatch event type.")
-	repositoryCmd.MarkFlagRequired("event-type")
-	repositoryCmd.Flags().StringVarP(&repositoryClientPayload, "client-payload", "p", "", "The repository dispatch event client payload JSON string.")
-	repositoryCmd.MarkFlagRequired("client-payload")
-	repositoryCmd.Flags().StringVarP(&repositoryWorkflow, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
-	repositoryCmd.MarkFlagRequired("workflow")
-
-	rootCmd.AddCommand(repositoryCmd)
 }

@@ -1,4 +1,4 @@
-package cmd
+package dispatch
 
 import (
 	"bytes"
@@ -26,22 +26,22 @@ type workflowDispatchOptions struct {
 	dispatchOptions
 }
 
-var (
-	workflowInputs string
-	workflowName   string
-	workflowRef    string
-)
+func NewCmdWorkflow() *cobra.Command {
+	var (
+		workflowInputs string
+		workflowName   string
+		workflowRef    string
+	)
 
-// workflowCmd represents the workflow subcommand
-var workflowCmd = &cobra.Command{
-	Use: heredoc.Doc(`
+	cmd := &cobra.Command{
+		Use: heredoc.Doc(`
 		workflow \
 			--repo [owner/repo] \
 			--inputs [json-string] \
 			--workflow [workflow-file-name.yaml]
 	`),
-	Short: "Send a workflow dispatch event and watch the resulting GitHub Actions run",
-	Long: heredoc.Doc(`
+		Short: "Send a workflow dispatch event and watch the resulting GitHub Actions run",
+		Long: heredoc.Doc(`
 		This command sends a workflow dispatch event and attempts to find and watch the
 		resulting GitHub Actions run whose file name or ID is specified as '--workflow'.
 
@@ -50,7 +50,7 @@ var workflowCmd = &cobra.Command{
 		watch an unrelated GitHub Actions workflow run in the event that multiple runs of
 		the specified workflow are running concurrently.
 	`),
-	Example: heredoc.Doc(`
+		Example: heredoc.Doc(`
 		gh dispatch workflow \
 			--repo mdb/gh-dispatch \
 			--inputs '{"name": "Mike"}' \
@@ -63,28 +63,43 @@ var workflowCmd = &cobra.Command{
 			--workflow workflow_dispatch.yaml \
 			--ref my-feature-branch
 	`),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		repo, _ := cmd.Flags().GetString("repo")
+		RunE: func(cmd *cobra.Command, args []string) error {
+			repo, _ := cmd.Flags().GetString("repo")
 
-		b := []byte(workflowInputs)
-		var wInputs interface{}
-		json.Unmarshal(b, &wInputs)
+			b := []byte(workflowInputs)
+			var wInputs interface{}
+			json.Unmarshal(b, &wInputs)
 
-		ios := iostreams.System()
+			ios := iostreams.System()
 
-		dOptions := dispatchOptions{
-			repo:          repo,
-			httpTransport: http.DefaultTransport,
-			io:            ios,
-		}
+			dOptions := dispatchOptions{
+				repo:          repo,
+				httpTransport: http.DefaultTransport,
+				io:            ios,
+			}
 
-		return workflowDispatchRun(&workflowDispatchOptions{
-			inputs:          wInputs,
-			ref:             workflowRef,
-			workflow:        workflowName,
-			dispatchOptions: dOptions,
-		})
-	},
+			return workflowDispatchRun(&workflowDispatchOptions{
+				inputs:          wInputs,
+				ref:             workflowRef,
+				workflow:        workflowName,
+				dispatchOptions: dOptions,
+			})
+		},
+	}
+
+	// TODO: how does the 'gh run' command represent inputs?
+	// Is it worth better emulating its interface?
+	cmd.Flags().StringVarP(&workflowInputs, "inputs", "i", "", "The workflow dispatch inputs JSON string.")
+	cmd.MarkFlagRequired("inputs")
+	// TODO: how does the 'gh run' command represent workflow?
+	// Is it worth better emulating its interface?
+	cmd.Flags().StringVarP(&workflowName, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
+	cmd.MarkFlagRequired("workflow")
+	// TODO: how does the 'gh run' command represent ref?
+	// Is it worth better emulating its interface?
+	cmd.Flags().StringVarP(&workflowRef, "ref", "f", "main", "The git reference for the workflow. Can be a branch or tag name.")
+
+	return cmd
 }
 
 func workflowDispatchRun(opts *workflowDispatchOptions) error {
@@ -128,20 +143,4 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 	}
 
 	return render(opts.io, client, opts.repo, run)
-}
-
-func init() {
-	// TODO: how does the 'gh run' command represent inputs?
-	// Is it worth better emulating its interface?
-	workflowCmd.Flags().StringVarP(&workflowInputs, "inputs", "i", "", "The workflow dispatch inputs JSON string.")
-	workflowCmd.MarkFlagRequired("inputs")
-	// TODO: how does the 'gh run' command represent workflow?
-	// Is it worth better emulating its interface?
-	workflowCmd.Flags().StringVarP(&workflowName, "workflow", "w", "", "The resulting GitHub Actions workflow name.")
-	workflowCmd.MarkFlagRequired("workflow")
-	// TODO: how does the 'gh run' command represent ref?
-	// Is it worth better emulating its interface?
-	workflowCmd.Flags().StringVarP(&workflowRef, "ref", "f", "main", "The git reference for the workflow. Can be a branch or tag name.")
-
-	rootCmd.AddCommand(workflowCmd)
 }
