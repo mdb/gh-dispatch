@@ -7,6 +7,11 @@ on:
         description: "The name to address"
         type: string
         required: true
+      sleep_duration:
+        description: "A duration of time to sleep"
+        type: string
+        required: false
+        default: 0s
       force_fail:
         description: "Deliberately force the run to fail"
         type: boolean
@@ -24,6 +29,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: say-goodbye
         run: |
+          sleep ${{ inputs.sleep_duration }}
           if [ "${{ inputs.force_fail }}" = "true" ]; then
             echo "forced fail"
             exit 1
