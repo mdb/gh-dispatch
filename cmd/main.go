@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/mdb/gh-dispatch/dispatch"
+	"github.com/mdb/gh-dispatch/internal/dispatch"
 	"github.com/spf13/cobra"
 )
 
