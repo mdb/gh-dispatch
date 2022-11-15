@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/mdb/gh-dispatch/dispatch"
+	"github.com/cli/go-gh"
+	"github.com/mdb/gh-dispatch/internal/dispatch"
 	"github.com/spf13/cobra"
 )
 
@@ -23,8 +25,14 @@ func main() {
 		Version:      version,
 	}
 
+	defaultRepo := ""
+	currentRepo, _ := gh.CurrentRepository()
+	if currentRepo != nil {
+		defaultRepo = fmt.Sprintf("%s/%s", currentRepo.Owner(), currentRepo.Name())
+	}
+
 	// TODO: how to make this required?
-	rootCmd.PersistentFlags().StringP("repo", "R", "", "The targeted repository's full name (in 'owner/repo' format)")
+	rootCmd.PersistentFlags().StringP("repo", "R", defaultRepo, "The targeted repository's full name (in 'owner/repo' format)")
 
 	repositoryCmd := dispatch.NewCmdRepository()
 	rootCmd.AddCommand(repositoryCmd)

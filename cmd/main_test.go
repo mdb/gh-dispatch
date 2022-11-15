@@ -41,7 +41,7 @@ Available Commands:
 
 Flags:
   -h, --help          help for gh
-  -R, --repo string   The targeted repository's full name (in 'owner/repo' format)
+  -R, --repo string   The targeted repository's full name (in 'owner/repo' format) (default "mdb/gh-dispatch")
   -v, --version       version for gh
 
 Use "gh [command] --help" for more information about a command.
@@ -95,7 +95,6 @@ func TestRepositoryAcceptance(t *testing.T) {
 		args: []string{
 			"dispatch",
 			"repository",
-			"--repo=mdb/gh-dispatch",
 			"--event-type=hello",
 			`--client-payload={"name": "Mike"}`,
 			"--workflow=Hello",
@@ -168,7 +167,6 @@ func TestWorkflowAcceptance(t *testing.T) {
 		args: []string{
 			"dispatch",
 			"workflow",
-			"--repo=mdb/gh-dispatch",
 			`--inputs={"name": "Mike", "force_fail": "false"}`,
 			"--workflow=workflow_dispatch.yaml",
 		},
@@ -185,7 +183,6 @@ func TestWorkflowAcceptance(t *testing.T) {
 		args: []string{
 			"dispatch",
 			"workflow",
-			"--repo=mdb/gh-dispatch",
 			`--inputs={"name": "Mike", "force_fail": "true"}`,
 			"--workflow=workflow_dispatch.yaml",
 		},
