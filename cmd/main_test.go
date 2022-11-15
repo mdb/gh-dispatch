@@ -95,7 +95,6 @@ func TestRepositoryAcceptance(t *testing.T) {
 		args: []string{
 			"dispatch",
 			"repository",
-			"--repo=mdb/gh-dispatch",
 			"--event-type=hello",
 			`--client-payload={"name": "Mike"}`,
 			"--workflow=Hello",
@@ -168,7 +167,6 @@ func TestWorkflowAcceptance(t *testing.T) {
 		args: []string{
 			"dispatch",
 			"workflow",
-			"--repo=mdb/gh-dispatch",
 			`--inputs={"name": "Mike", "force_fail": "false"}`,
 			"--workflow=workflow_dispatch.yaml",
 		},
@@ -185,7 +183,6 @@ func TestWorkflowAcceptance(t *testing.T) {
 		args: []string{
 			"dispatch",
 			"workflow",
-			"--repo=mdb/gh-dispatch",
 			`--inputs={"name": "Mike", "force_fail": "true"}`,
 			"--workflow=workflow_dispatch.yaml",
 		},
