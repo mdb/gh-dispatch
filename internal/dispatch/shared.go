@@ -110,6 +110,8 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, 
 		return nil, fmt.Errorf("failed to get run: %w", err)
 	}
 
+	run.workflowName = ""
+
 	jobs, err := getJobs(client, repo, run.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get jobs: %w", err)
@@ -139,6 +141,7 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, 
 		return nil, fmt.Errorf("failed to get annotations: %w", annotationErr)
 	}
 
+	fmt.Fprintln(out, shared.RenderRunHeader(cs, *run, "", ""))
 	fmt.Fprintln(out)
 
 	if len(jobs) == 0 {
