@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/MakeNowJust/heredoc"
+	cliapi "github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/pkg/cmd/workflow/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/go-gh"
@@ -130,7 +131,12 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		}
 	}
 
-	runID, err := getRunID(client, opts.repo, "repository_dispatch", workflowID)
+	httpClient := &http.Client{
+		Transport: opts.httpTransport,
+	}
+	ghClient := cliapi.NewClientFromHTTP(httpClient)
+
+	runID, err := getRunID2(ghClient, opts.repo, "repository_dispatch", workflowID)
 	if err != nil {
 		return err
 	}

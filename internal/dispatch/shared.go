@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
+	cliapi "github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -30,6 +32,53 @@ type dispatchOptions struct {
 	httpTransport http.RoundTripper
 	io            *iostreams.IOStreams
 	authToken     string
+}
+
+type ghRepo struct {
+	Name  string
+	Owner string
+}
+
+func (r ghRepo) RepoName() string {
+	return r.Name
+}
+
+func (r ghRepo) RepoOwner() string {
+	return r.Owner
+}
+
+func (r ghRepo) RepoHost() string {
+	return "github.com"
+}
+
+func getRunID2(client *cliapi.Client, repo, event string, workflowID int64) (int64, error) {
+	repoParts := strings.Split(repo, "/")
+	r := &ghRepo{
+		Owner: repoParts[0],
+		Name:  repoParts[1],
+	}
+
+	for {
+		runs, err := shared.GetRuns(client, r, &shared.FilterOptions{
+			// TODO: should we detect/pass an Actor as well? Perhaps a Branch too?
+			// Alternatively, should FilterOptions have an Event field?
+			// https://github.com/cli/cli/blob/trunk/pkg/cmd/run/shared/shared.go#L281
+			WorkflowID: workflowID,
+		}, 100)
+		if err != nil {
+			return 0, err
+		}
+
+		// TODO: match on workflow name, or somehow more accurately ensure we are fetching
+		// _the_ workflow triggered by the `gh dispatch` command.
+		// TODO: also match on event
+		for _, run := range runs.WorkflowRuns {
+			// TODO: should this also try to match on run.triggering_actor.login?
+			if run.Status != shared.Completed && run.WorkflowID == workflowID {
+				return run.ID, nil
+			}
+		}
+	}
 }
 
 func getRunID(client api.RESTClient, repo, event string, workflowID int64) (int64, error) {
@@ -110,8 +159,6 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, 
 		return nil, fmt.Errorf("failed to get run: %w", err)
 	}
 
-	run.workflowName = ""
-
 	jobs, err := getJobs(client, repo, run.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get jobs: %w", err)
@@ -141,7 +188,7 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, 
 		return nil, fmt.Errorf("failed to get annotations: %w", annotationErr)
 	}
 
-	fmt.Fprintln(out, shared.RenderRunHeader(cs, *run, "", ""))
+	//fmt.Fprintln(out, shared.RenderRunHeader(cs, *run, "", ""))
 	fmt.Fprintln(out)
 
 	if len(jobs) == 0 {

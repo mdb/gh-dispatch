@@ -36,10 +36,10 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.StringResponse(getWorkflowsResponse))
 
 				v := url.Values{}
-				v.Set("event", "repository_dispatch")
+				v.Set("per_page", "100")
 
 				reg.Register(
-					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/runs", repo), v),
+					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
 					httpmock.StringResponse(getWorkflowRunsResponse))
 
 				reg.Register(
@@ -82,10 +82,10 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.StringResponse(getWorkflowsResponse))
 
 				v := url.Values{}
-				v.Set("event", "repository_dispatch")
+				v.Set("per_page", "100")
 
 				reg.Register(
-					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/runs", repo), v),
+					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
 					httpmock.StringResponse(getWorkflowRunsResponse))
 
 				reg.Register(
