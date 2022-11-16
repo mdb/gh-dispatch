@@ -61,8 +61,13 @@ func TestWorkflowDispatchRun(t *testing.T) {
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
-						"id": 123
+						"id": 123,
+						"workflow_id": 456
 					}`))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
@@ -121,8 +126,13 @@ func TestWorkflowDispatchRun(t *testing.T) {
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
-						"id": 123
+						"id": 123,
+						"workflow_id": 456
 					}`))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),

@@ -142,7 +142,7 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 		return err
 	}
 
-	run, err := getRun(client, opts.repo, runID)
+	run, err := getRun2(ghClient, opts.repo, runID)
 	if err != nil {
 		return fmt.Errorf("failed to get run: %w", err)
 	}
