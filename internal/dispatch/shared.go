@@ -20,11 +20,13 @@ const (
 	githubHost string = "github.com"
 )
 
-// Implements Config interface
+// Conf implements the cliapi tokenGetter interface
 type Conf struct {
 	*config.Config
 }
 
+// AuthToken implements the cliapi tokenGetter interface
+// by providing a method for retrieving the auth token.
 func (c *Conf) AuthToken(hostname string) (string, string) {
 	return auth.TokenForHost(hostname)
 }
@@ -137,7 +139,12 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, 
 			continue
 		}
 
-		as, annotationErr = getAnnotations(client, repo, job)
+		repoParts := strings.Split(repo, "/")
+		r := &ghRepo{
+			Owner: repoParts[0],
+			Name:  repoParts[1],
+		}
+		as, annotationErr = shared.GetAnnotations(client, r, job)
 		if annotationErr != nil {
 			break
 		}
@@ -219,20 +226,4 @@ func getJobs(client *cliapi.Client, repo string, runID int64) ([]shared.Job, err
 	}
 
 	return result.Jobs, nil
-}
-
-func getAnnotations(client *cliapi.Client, repo string, job shared.Job) ([]shared.Annotation, error) {
-	var result []*shared.Annotation
-	err := client.REST(githubHost, "GET", fmt.Sprintf("repos/%s/check-runs/%d/annotations", repo, job.ID), nil, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	annotations := []shared.Annotation{}
-	for _, annotation := range result {
-		annotation.JobName = job.Name
-		annotations = append(annotations, *annotation)
-	}
-
-	return annotations, nil
 }
