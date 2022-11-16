@@ -96,7 +96,16 @@ func TestWorkflowDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/check-runs/123/annotations", repo)),
 					httpmock.StringResponse("[]"))
 			},
-			wantOut: "Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/OWNER/REPO/actions/runs/123\n\n\nJOBS\n✓ build in 1m59s (ID 123)\n  ✓ Run actions/checkout@v2\n  ✓ Test\n",
+			wantOut: `Refreshing run status every 2 seconds. Press Ctrl+C to quit.
+
+https://github.com/OWNER/REPO/actions/runs/123
+
+
+JOBS
+✓ build in 1m59s (ID 123)
+  ✓ Run actions/checkout@v2
+  ✓ Test
+`,
 		}, {
 			name: "unsuccessful workflow run",
 			opts: &workflowDispatchOptions{
@@ -167,7 +176,16 @@ func TestWorkflowDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/check-runs/123/annotations", repo)),
 					httpmock.StringResponse("[]"))
 			},
-			wantOut: "Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/OWNER/REPO/actions/runs/123\n\n\nJOBS\n✓ build in 1m59s (ID 123)\n  ✓ Run actions/checkout@v2\n  X Test\n",
+			wantOut: `Refreshing run status every 2 seconds. Press Ctrl+C to quit.
+
+https://github.com/OWNER/REPO/actions/runs/123
+
+
+JOBS
+✓ build in 1m59s (ID 123)
+  ✓ Run actions/checkout@v2
+  X Test
+`,
 			wantErr: true,
 			errMsg:  "SilentError",
 		}, {
