@@ -131,10 +131,9 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		}
 	}
 
-	httpClient := &http.Client{
+	ghClient := cliapi.NewClientFromHTTP(&http.Client{
 		Transport: opts.httpTransport,
-	}
-	ghClient := cliapi.NewClientFromHTTP(httpClient)
+	})
 
 	runID, err := getRunID2(ghClient, opts.repo, "repository_dispatch", workflowID)
 	if err != nil {
