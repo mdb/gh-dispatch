@@ -188,6 +188,16 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, 
 	return run, nil
 }
 
+func getRun2(client *cliapi.Client, repo string, runID int64) (*shared.Run, error) {
+	repoParts := strings.Split(repo, "/")
+	r := &ghRepo{
+		Owner: repoParts[0],
+		Name:  repoParts[1],
+	}
+
+	return shared.GetRun(client, r, fmt.Sprintf("%d", runID))
+}
+
 func getRun(client api.RESTClient, repo string, runID int64) (*shared.Run, error) {
 	var result shared.Run
 	err := client.Get(fmt.Sprintf("repos/%s/actions/runs/%d", repo, runID), &result)
