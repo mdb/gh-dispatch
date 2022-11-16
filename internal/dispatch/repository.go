@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	cliapi "github.com/cli/cli/v2/api"
+	runShared "github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmd/workflow/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -57,7 +59,12 @@ func NewCmdRepository() *cobra.Command {
 			--workflow Hello
 	`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			repo, _ := cmd.Flags().GetString("repo")
+			r, _ := cmd.Flags().GetString("repo")
+			repoParts := strings.Split(r, "/")
+			repo := &ghRepo{
+				Owner: repoParts[0],
+				Name:  repoParts[1],
+			}
 
 			b := []byte(repositoryClientPayload)
 			var repoClientPayload interface{}
@@ -105,13 +112,13 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
 
 	var in interface{}
-	err = ghClient.REST(githubHost, "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo), &buf, &in)
+	err = ghClient.REST(githubHost, "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo.RepoFullName()), &buf, &in)
 	if err != nil {
 		return err
 	}
 
 	var wfs shared.WorkflowsPayload
-	err = ghClient.REST(githubHost, "GET", fmt.Sprintf("repos/%s/actions/workflows", opts.repo), nil, &wfs)
+	err = ghClient.REST(githubHost, "GET", fmt.Sprintf("repos/%s/actions/workflows", opts.repo.RepoFullName()), nil, &wfs)
 	if err != nil {
 		return err
 	}
@@ -129,7 +136,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	run, err := getRun(ghClient, opts.repo, runID)
+	run, err := runShared.GetRun(ghClient, opts.repo, fmt.Sprintf("%d", runID))
 	if err != nil {
 		return fmt.Errorf("failed to get run: %w", err)
 	}

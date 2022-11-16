@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	cliapi "github.com/cli/cli/v2/api"
@@ -44,7 +43,7 @@ type workflowRunsResponse struct {
 }
 
 type dispatchOptions struct {
-	repo       string
+	repo       *ghRepo
 	httpClient *http.Client
 	io         *iostreams.IOStreams
 }
@@ -66,7 +65,11 @@ func (r ghRepo) RepoHost() string {
 	return githubHost
 }
 
-func render(ios *iostreams.IOStreams, client *cliapi.Client, repo string, run *shared.Run) error {
+func (r ghRepo) RepoFullName() string {
+	return fmt.Sprintf("%s/%s", r.RepoOwner(), r.RepoName())
+}
+
+func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *shared.Run) error {
 	cs := ios.ColorScheme()
 	annotationCache := map[int64][]shared.Annotation{}
 	out := &bytes.Buffer{}
@@ -86,7 +89,7 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo string, run *s
 		interval := 2
 		fmt.Fprintln(ios.Out, cs.Boldf("Refreshing run status every %d seconds. Press Ctrl+C to quit.", interval))
 		fmt.Fprintln(ios.Out)
-		fmt.Fprintln(ios.Out, cs.Boldf("https://github.com/%s/actions/runs/%d", repo, run.ID))
+		fmt.Fprintln(ios.Out, cs.Boldf("https://github.com/%s/actions/runs/%d", repo.RepoFullName(), run.ID))
 		fmt.Fprintln(ios.Out)
 
 		_, err = io.Copy(ios.Out, out)
@@ -119,8 +122,8 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo string, run *s
 	return nil
 }
 
-func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
-	run, err := getRun(client, repo, run.ID)
+func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, repo *ghRepo, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
+	run, err := shared.GetRun(client, repo, fmt.Sprintf("%d", run.ID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get run: %w", err)
 	}
@@ -139,12 +142,7 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, 
 			continue
 		}
 
-		repoParts := strings.Split(repo, "/")
-		r := &ghRepo{
-			Owner: repoParts[0],
-			Name:  repoParts[1],
-		}
-		as, annotationErr = shared.GetAnnotations(client, r, job)
+		as, annotationErr = shared.GetAnnotations(client, repo, job)
 		if annotationErr != nil {
 			break
 		}
@@ -178,15 +176,9 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, 
 	return run, nil
 }
 
-func getRunID(client *cliapi.Client, repo, event string, workflowID int64) (int64, error) {
-	repoParts := strings.Split(repo, "/")
-	r := &ghRepo{
-		Owner: repoParts[0],
-		Name:  repoParts[1],
-	}
-
+func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int64) (int64, error) {
 	for {
-		runs, err := shared.GetRuns(client, r, &shared.FilterOptions{
+		runs, err := shared.GetRuns(client, repo, &shared.FilterOptions{
 			// TODO: should we detect/pass an Actor as well? Perhaps a Branch too?
 			// Alternatively, should FilterOptions have an Event field?
 			// https://github.com/cli/cli/blob/trunk/pkg/cmd/run/shared/shared.go#L281
@@ -208,19 +200,9 @@ func getRunID(client *cliapi.Client, repo, event string, workflowID int64) (int6
 	}
 }
 
-func getRun(client *cliapi.Client, repo string, runID int64) (*shared.Run, error) {
-	repoParts := strings.Split(repo, "/")
-	r := &ghRepo{
-		Owner: repoParts[0],
-		Name:  repoParts[1],
-	}
-
-	return shared.GetRun(client, r, fmt.Sprintf("%d", runID))
-}
-
-func getJobs(client *cliapi.Client, repo string, runID int64) ([]shared.Job, error) {
+func getJobs(client *cliapi.Client, repo *ghRepo, runID int64) ([]shared.Job, error) {
 	var result shared.JobsPayload
-	err := client.REST(githubHost, "GET", fmt.Sprintf("repos/%s/actions/runs/%d/attempts/1/jobs", repo, runID), nil, &result)
+	err := client.REST(githubHost, "GET", fmt.Sprintf("repos/%s/actions/runs/%d/attempts/1/jobs", repo.RepoFullName(), runID), nil, &result)
 	if err != nil {
 		return nil, err
 	}

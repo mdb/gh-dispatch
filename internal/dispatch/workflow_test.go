@@ -12,8 +12,13 @@ import (
 )
 
 func TestWorkflowDispatchRun(t *testing.T) {
-	repo := "OWNER/REPO"
+	ghRepo := &ghRepo{
+		Owner: "OWNER",
+		Name:  "REPO",
+	}
+	repo := ghRepo.RepoFullName()
 	workflow := "workflow.yaml"
+
 	tests := []struct {
 		name      string
 		opts      *workflowDispatchOptions
@@ -189,7 +194,7 @@ func TestWorkflowDispatchRun(t *testing.T) {
 		ios.SetStdoutTTY(false)
 		ios.SetAlternateScreenBufferEnabled(false)
 
-		tt.opts.repo = repo
+		tt.opts.repo = ghRepo
 		tt.opts.io = ios
 		tt.opts.httpClient = &http.Client{
 			Transport: reg,

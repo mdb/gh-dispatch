@@ -12,7 +12,12 @@ import (
 )
 
 func TestRepositoryDispatchRun(t *testing.T) {
-	repo := "OWNER/REPO"
+	ghRepo := &ghRepo{
+		Name:  "REPO",
+		Owner: "OWNER",
+	}
+	repo := ghRepo.RepoFullName()
+
 	tests := []struct {
 		name      string
 		opts      *repositoryDispatchOptions
@@ -187,7 +192,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 		ios.SetStdoutTTY(false)
 		ios.SetAlternateScreenBufferEnabled(false)
 
-		tt.opts.repo = repo
+		tt.opts.repo = ghRepo
 		tt.opts.io = ios
 		tt.opts.httpClient = &http.Client{
 			Transport: reg,
