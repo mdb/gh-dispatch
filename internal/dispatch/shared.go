@@ -122,6 +122,8 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *
 	return nil
 }
 
+// renderRun is largely an emulation of the upstream 'gh run watch' implementation...
+// https://github.com/cli/cli/blob/v2.20.2/pkg/cmd/run/watch/watch.go
 func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, repo *ghRepo, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
 	run, err := shared.GetRun(client, repo, fmt.Sprintf("%d", run.ID))
 	if err != nil {
@@ -200,6 +202,7 @@ func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int6
 	}
 }
 
+// TODO: could this be replaced by shared.GetJobs?
 func getJobs(client *cliapi.Client, repo *ghRepo, runID int64) ([]shared.Job, error) {
 	var result shared.JobsPayload
 	err := client.REST(githubHost, "GET", fmt.Sprintf("repos/%s/actions/runs/%d/attempts/1/jobs", repo.RepoFullName(), runID), nil, &result)
