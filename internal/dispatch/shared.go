@@ -12,7 +12,10 @@ import (
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/go-gh/pkg/api"
+)
+
+const (
+	githubHost string = "github.com"
 )
 
 type workflowRun struct {
@@ -48,7 +51,7 @@ func (r ghRepo) RepoOwner() string {
 }
 
 func (r ghRepo) RepoHost() string {
-	return "github.com"
+	return githubHost
 }
 
 func getRunID(client *cliapi.Client, repo, event string, workflowID int64) (int64, error) {
@@ -81,7 +84,7 @@ func getRunID(client *cliapi.Client, repo, event string, workflowID int64) (int6
 	}
 }
 
-func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *shared.Run) error {
+func render(ios *iostreams.IOStreams, client *cliapi.Client, repo string, run *shared.Run) error {
 	cs := ios.ColorScheme()
 	annotationCache := map[int64][]shared.Annotation{}
 	out := &bytes.Buffer{}
@@ -134,7 +137,7 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 	return nil
 }
 
-func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
+func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
 	run, err := getRun(client, repo, run.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get run: %w", err)
@@ -188,7 +191,7 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, 
 	return run, nil
 }
 
-func getRun2(client *cliapi.Client, repo string, runID int64) (*shared.Run, error) {
+func getRun(client *cliapi.Client, repo string, runID int64) (*shared.Run, error) {
 	repoParts := strings.Split(repo, "/")
 	r := &ghRepo{
 		Owner: repoParts[0],
@@ -198,19 +201,9 @@ func getRun2(client *cliapi.Client, repo string, runID int64) (*shared.Run, erro
 	return shared.GetRun(client, r, fmt.Sprintf("%d", runID))
 }
 
-func getRun(client api.RESTClient, repo string, runID int64) (*shared.Run, error) {
-	var result shared.Run
-	err := client.Get(fmt.Sprintf("repos/%s/actions/runs/%d", repo, runID), &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return &result, nil
-}
-
-func getJobs(client api.RESTClient, repo string, runID int64) ([]shared.Job, error) {
+func getJobs(client *cliapi.Client, repo string, runID int64) ([]shared.Job, error) {
 	var result shared.JobsPayload
-	err := client.Get(fmt.Sprintf("repos/%s/actions/runs/%d/attempts/1/jobs", repo, runID), &result)
+	err := client.REST(githubHost, "GET", fmt.Sprintf("repos/%s/actions/runs/%d/attempts/1/jobs", repo, runID), nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -218,9 +211,9 @@ func getJobs(client api.RESTClient, repo string, runID int64) ([]shared.Job, err
 	return result.Jobs, nil
 }
 
-func getAnnotations(client api.RESTClient, repo string, job shared.Job) ([]shared.Annotation, error) {
+func getAnnotations(client *cliapi.Client, repo string, job shared.Job) ([]shared.Annotation, error) {
 	var result []*shared.Annotation
-	err := client.Get(fmt.Sprintf("repos/%s/check-runs/%d/annotations", repo, job.ID), &result)
+	err := client.REST(githubHost, "GET", fmt.Sprintf("repos/%s/check-runs/%d/annotations", repo, job.ID), nil, &result)
 	if err != nil {
 		return nil, err
 	}

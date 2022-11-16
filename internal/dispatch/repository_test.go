@@ -56,6 +56,11 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
 					httpmock.StringResponse(getWorkflowResponse))
 
+				// TODO: is this correct? is it the correct response?
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
+
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
@@ -71,6 +76,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
 						"id": 123,
+						"workflow_id": 456,
 						"status": "completed",
 						"conclusion": "success"
 					}`))
@@ -121,6 +127,11 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
 					httpmock.StringResponse(getWorkflowResponse))
 
+				// TODO: is this correct? is it the correct response?
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
+
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
@@ -136,6 +147,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
 						"id": 123,
+						"workflow_id": 456,
 						"status": "completed",
 						"conclusion": "failure"
 					}`))
