@@ -191,7 +191,6 @@ func TestWorkflowDispatchRun(t *testing.T) {
 		tt.opts.repo = repo
 		tt.opts.io = ios
 		tt.opts.httpTransport = reg
-		tt.opts.authToken = "123"
 
 		t.Run(tt.name, func(t *testing.T) {
 			err := workflowDispatchRun(tt.opts)

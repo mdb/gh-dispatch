@@ -34,7 +34,6 @@ type dispatchOptions struct {
 	repo          string
 	httpTransport http.RoundTripper
 	io            *iostreams.IOStreams
-	authToken     string
 }
 
 type ghRepo struct {
