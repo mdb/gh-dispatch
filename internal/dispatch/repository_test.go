@@ -42,6 +42,20 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
 					httpmock.StringResponse(getWorkflowRunsResponse))
 
+				q := url.Values{}
+				q.Set("per_page", "100")
+				q.Set("page", "1")
+
+				// TODO: is this correct? is it the correct response?
+				reg.Register(
+					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows", repo), q),
+					httpmock.StringResponse(getWorkflowRunsResponse))
+
+				// TODO: is this correct? is it the correct response?
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
+
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
@@ -87,6 +101,20 @@ func TestRepositoryDispatchRun(t *testing.T) {
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
 					httpmock.StringResponse(getWorkflowRunsResponse))
+
+				q := url.Values{}
+				q.Set("per_page", "100")
+				q.Set("page", "1")
+
+				// TODO: is this correct? is it the correct response?
+				reg.Register(
+					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows", repo), q),
+					httpmock.StringResponse(getWorkflowRunsResponse))
+
+				// TODO: is this correct? is it the correct response?
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
