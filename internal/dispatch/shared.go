@@ -31,9 +31,9 @@ type workflowRunsResponse struct {
 }
 
 type dispatchOptions struct {
-	repo          string
-	httpTransport http.RoundTripper
-	io            *iostreams.IOStreams
+	repo       string
+	httpClient *http.Client
+	io         *iostreams.IOStreams
 }
 
 type ghRepo struct {

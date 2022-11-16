@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/MakeNowJust/heredoc"
 	cliapi "github.com/cli/cli/v2/api"
@@ -70,11 +69,11 @@ func NewCmdWorkflow() *cobra.Command {
 			json.Unmarshal(b, &wInputs)
 
 			ios := iostreams.System()
-
+			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{})
 			dOptions := dispatchOptions{
-				repo:          repo,
-				httpTransport: http.DefaultTransport,
-				io:            ios,
+				repo:       repo,
+				httpClient: ghClient,
+				io:         ios,
 			}
 
 			return workflowDispatchRun(&workflowDispatchOptions{
@@ -111,9 +110,7 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 		return err
 	}
 
-	ghClient := cliapi.NewClientFromHTTP(&http.Client{
-		Transport: opts.httpTransport,
-	})
+	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
 
 	var in interface{}
 	err = ghClient.REST(githubHost, "POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", opts.repo, opts.workflow), &buf, &in)

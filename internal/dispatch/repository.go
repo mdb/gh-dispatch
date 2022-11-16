@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/MakeNowJust/heredoc"
 	cliapi "github.com/cli/cli/v2/api"
@@ -65,11 +64,11 @@ func NewCmdRepository() *cobra.Command {
 			json.Unmarshal(b, &repoClientPayload)
 
 			ios := iostreams.System()
-
+			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{})
 			dOptions := dispatchOptions{
-				repo:          repo,
-				httpTransport: http.DefaultTransport,
-				io:            ios,
+				repo:       repo,
+				httpClient: ghClient,
+				io:         ios,
 			}
 
 			return repositoryDispatchRun(&repositoryDispatchOptions{
@@ -101,9 +100,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	ghClient := cliapi.NewClientFromHTTP(&http.Client{
-		Transport: opts.httpTransport,
-	})
+	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
 
 	var in interface{}
 	err = ghClient.REST(githubHost, "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo), &buf, &in)
