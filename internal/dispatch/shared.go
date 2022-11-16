@@ -54,36 +54,6 @@ func (r ghRepo) RepoHost() string {
 	return githubHost
 }
 
-func getRunID(client *cliapi.Client, repo, event string, workflowID int64) (int64, error) {
-	repoParts := strings.Split(repo, "/")
-	r := &ghRepo{
-		Owner: repoParts[0],
-		Name:  repoParts[1],
-	}
-
-	for {
-		runs, err := shared.GetRuns(client, r, &shared.FilterOptions{
-			// TODO: should we detect/pass an Actor as well? Perhaps a Branch too?
-			// Alternatively, should FilterOptions have an Event field?
-			// https://github.com/cli/cli/blob/trunk/pkg/cmd/run/shared/shared.go#L281
-			WorkflowID: workflowID,
-		}, 100)
-		if err != nil {
-			return 0, err
-		}
-
-		// TODO: match on workflow name, or somehow more accurately ensure we are fetching
-		// _the_ workflow triggered by the `gh dispatch` command.
-		// TODO: also match on event
-		for _, run := range runs.WorkflowRuns {
-			// TODO: should this also try to match on run.triggering_actor.login?
-			if run.Status != shared.Completed && run.WorkflowID == workflowID {
-				return run.ID, nil
-			}
-		}
-	}
-}
-
 func render(ios *iostreams.IOStreams, client *cliapi.Client, repo string, run *shared.Run) error {
 	cs := ios.ColorScheme()
 	annotationCache := map[int64][]shared.Annotation{}
@@ -189,6 +159,36 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, 
 	}
 
 	return run, nil
+}
+
+func getRunID(client *cliapi.Client, repo, event string, workflowID int64) (int64, error) {
+	repoParts := strings.Split(repo, "/")
+	r := &ghRepo{
+		Owner: repoParts[0],
+		Name:  repoParts[1],
+	}
+
+	for {
+		runs, err := shared.GetRuns(client, r, &shared.FilterOptions{
+			// TODO: should we detect/pass an Actor as well? Perhaps a Branch too?
+			// Alternatively, should FilterOptions have an Event field?
+			// https://github.com/cli/cli/blob/trunk/pkg/cmd/run/shared/shared.go#L281
+			WorkflowID: workflowID,
+		}, 100)
+		if err != nil {
+			return 0, err
+		}
+
+		// TODO: match on workflow name, or somehow more accurately ensure we are fetching
+		// _the_ workflow triggered by the `gh dispatch` command.
+		// TODO: also match on event
+		for _, run := range runs.WorkflowRuns {
+			// TODO: should this also try to match on run.triggering_actor.login?
+			if run.Status != shared.Completed && run.WorkflowID == workflowID {
+				return run.ID, nil
+			}
+		}
+	}
 }
 
 func getRun(client *cliapi.Client, repo string, runID int64) (*shared.Run, error) {

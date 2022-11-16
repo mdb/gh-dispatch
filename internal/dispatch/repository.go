@@ -10,8 +10,6 @@ import (
 	cliapi "github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/pkg/cmd/workflow/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/go-gh"
-	"github.com/cli/go-gh/pkg/api"
 	"github.com/spf13/cobra"
 )
 
@@ -103,22 +101,18 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	client, err := gh.RESTClient(&api.ClientOptions{
+	ghClient := cliapi.NewClientFromHTTP(&http.Client{
 		Transport: opts.httpTransport,
-		AuthToken: opts.authToken,
 	})
-	if err != nil {
-		return err
-	}
 
 	var in interface{}
-	err = client.Post(fmt.Sprintf("repos/%s/dispatches", opts.repo), &buf, &in)
+	err = ghClient.REST(githubHost, "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo), &buf, &in)
 	if err != nil {
 		return err
 	}
 
 	var wfs shared.WorkflowsPayload
-	err = client.Get(fmt.Sprintf("repos/%s/actions/workflows", opts.repo), &wfs)
+	err = ghClient.REST(githubHost, "GET", fmt.Sprintf("repos/%s/actions/workflows", opts.repo), nil, &wfs)
 	if err != nil {
 		return err
 	}
@@ -130,10 +124,6 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 			break
 		}
 	}
-
-	ghClient := cliapi.NewClientFromHTTP(&http.Client{
-		Transport: opts.httpTransport,
-	})
 
 	runID, err := getRunID(ghClient, opts.repo, "repository_dispatch", workflowID)
 	if err != nil {
