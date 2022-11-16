@@ -51,7 +51,7 @@ func (r ghRepo) RepoHost() string {
 	return "github.com"
 }
 
-func getRunID2(client *cliapi.Client, repo, event string, workflowID int64) (int64, error) {
+func getRunID(client *cliapi.Client, repo, event string, workflowID int64) (int64, error) {
 	repoParts := strings.Split(repo, "/")
 	r := &ghRepo{
 		Owner: repoParts[0],
@@ -75,25 +75,6 @@ func getRunID2(client *cliapi.Client, repo, event string, workflowID int64) (int
 		for _, run := range runs.WorkflowRuns {
 			// TODO: should this also try to match on run.triggering_actor.login?
 			if run.Status != shared.Completed && run.WorkflowID == workflowID {
-				return run.ID, nil
-			}
-		}
-	}
-}
-
-func getRunID(client api.RESTClient, repo, event string, workflowID int64) (int64, error) {
-	for {
-		var wRuns workflowRunsResponse
-		err := client.Get(fmt.Sprintf("repos/%s/actions/runs?event=%s", repo, event), &wRuns)
-		if err != nil {
-			return 0, err
-		}
-
-		// TODO: match on workflow name, or somehow more accurately ensure we are fetching
-		// _the_ workflow triggered by the `gh dispatch` command.
-		for _, run := range wRuns.WorkflowRuns {
-			// TODO: should this also try to match on run.triggering_actor.login?
-			if run.Status != shared.Completed && run.WorkflowID == int(workflowID) {
 				return run.ID, nil
 			}
 		}

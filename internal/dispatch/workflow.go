@@ -137,7 +137,7 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 		Transport: opts.httpTransport,
 	})
 
-	runID, err := getRunID2(ghClient, opts.repo, "workflow_dispatch", wf.ID)
+	runID, err := getRunID(ghClient, opts.repo, "workflow_dispatch", wf.ID)
 	if err != nil {
 		return err
 	}

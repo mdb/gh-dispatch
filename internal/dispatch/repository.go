@@ -135,7 +135,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		Transport: opts.httpTransport,
 	})
 
-	runID, err := getRunID2(ghClient, opts.repo, "repository_dispatch", workflowID)
+	runID, err := getRunID(ghClient, opts.repo, "repository_dispatch", workflowID)
 	if err != nil {
 		return err
 	}
