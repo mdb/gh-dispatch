@@ -69,7 +69,9 @@ func NewCmdWorkflow() *cobra.Command {
 			json.Unmarshal(b, &wInputs)
 
 			ios := iostreams.System()
-			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{})
+			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{
+				Config: &Conf{},
+			})
 			dOptions := dispatchOptions{
 				repo:       repo,
 				httpClient: ghClient,

@@ -64,7 +64,9 @@ func NewCmdRepository() *cobra.Command {
 			json.Unmarshal(b, &repoClientPayload)
 
 			ios := iostreams.System()
-			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{})
+			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{
+				Config: &Conf{},
+			})
 			dOptions := dispatchOptions{
 				repo:       repo,
 				httpClient: ghClient,

@@ -12,11 +12,22 @@ import (
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
+	"github.com/cli/go-gh/pkg/auth"
+	"github.com/cli/go-gh/pkg/config"
 )
 
 const (
 	githubHost string = "github.com"
 )
+
+// Implements Config interface
+type Conf struct {
+	*config.Config
+}
+
+func (c *Conf) AuthToken(hostname string) (string, string) {
+	return auth.TokenForHost(hostname)
+}
 
 type workflowRun struct {
 	ID         int64         `json:"id"`
