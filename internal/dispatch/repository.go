@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
+	cliapi "github.com/cli/cli/v2/api"
+	runShared "github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmd/workflow/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/go-gh"
-	"github.com/cli/go-gh/pkg/api"
 	"github.com/spf13/cobra"
 )
 
@@ -59,18 +59,25 @@ func NewCmdRepository() *cobra.Command {
 			--workflow Hello
 	`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			repo, _ := cmd.Flags().GetString("repo")
+			r, _ := cmd.Flags().GetString("repo")
+			repoParts := strings.Split(r, "/")
+			repo := &ghRepo{
+				Owner: repoParts[0],
+				Name:  repoParts[1],
+			}
 
 			b := []byte(repositoryClientPayload)
 			var repoClientPayload interface{}
 			json.Unmarshal(b, &repoClientPayload)
 
 			ios := iostreams.System()
-
+			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{
+				Config: &Conf{},
+			})
 			dOptions := dispatchOptions{
-				repo:          repo,
-				httpTransport: http.DefaultTransport,
-				io:            ios,
+				repo:       repo,
+				httpClient: ghClient,
+				io:         ios,
 			}
 
 			return repositoryDispatchRun(&repositoryDispatchOptions{
@@ -102,22 +109,16 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	client, err := gh.RESTClient(&api.ClientOptions{
-		Transport: opts.httpTransport,
-		AuthToken: opts.authToken,
-	})
-	if err != nil {
-		return err
-	}
+	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
 
 	var in interface{}
-	err = client.Post(fmt.Sprintf("repos/%s/dispatches", opts.repo), &buf, &in)
+	err = ghClient.REST(opts.repo.RepoHost(), "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo.RepoFullName()), &buf, &in)
 	if err != nil {
 		return err
 	}
 
 	var wfs shared.WorkflowsPayload
-	err = client.Get(fmt.Sprintf("repos/%s/actions/workflows", opts.repo), &wfs)
+	err = ghClient.REST(opts.repo.RepoHost(), "GET", fmt.Sprintf("repos/%s/actions/workflows", opts.repo.RepoFullName()), nil, &wfs)
 	if err != nil {
 		return err
 	}
@@ -130,15 +131,15 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		}
 	}
 
-	runID, err := getRunID(client, opts.repo, "repository_dispatch", workflowID)
+	runID, err := getRunID(ghClient, opts.repo, "repository_dispatch", workflowID)
 	if err != nil {
 		return err
 	}
 
-	run, err := getRun(client, opts.repo, runID)
+	run, err := runShared.GetRun(ghClient, opts.repo, fmt.Sprintf("%d", runID))
 	if err != nil {
 		return fmt.Errorf("failed to get run: %w", err)
 	}
 
-	return render(opts.io, client, opts.repo, run)
+	return render(opts.io, ghClient, opts.repo, run)
 }

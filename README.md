@@ -57,7 +57,7 @@ Install a locally built `gh-dispatch` for use as `gh dispatch`:
 make install
 ```
 
-Run acceptance tests against a local `gh-dispatch` installation:
+Run acceptance tests against a local `gh-dispatch` installation, verifying the local `gh-dispatch` is able to trigger dispatch events and render the expected output:
 
 ```
 make acc-test

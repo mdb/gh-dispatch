@@ -7,11 +7,24 @@ import (
 	"net/http"
 	"time"
 
+	cliapi "github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/go-gh/pkg/api"
+	"github.com/cli/go-gh/pkg/auth"
+	"github.com/cli/go-gh/pkg/config"
 )
+
+// Conf implements the cliapi tokenGetter interface
+type Conf struct {
+	*config.Config
+}
+
+// AuthToken implements the cliapi tokenGetter interface
+// by providing a method for retrieving the auth token.
+func (c *Conf) AuthToken(hostname string) (string, string) {
+	return auth.TokenForHost(hostname)
+}
 
 type workflowRun struct {
 	ID         int64         `json:"id"`
@@ -26,32 +39,37 @@ type workflowRunsResponse struct {
 }
 
 type dispatchOptions struct {
-	repo          string
-	httpTransport http.RoundTripper
-	io            *iostreams.IOStreams
-	authToken     string
+	repo       *ghRepo
+	httpClient *http.Client
+	io         *iostreams.IOStreams
 }
 
-func getRunID(client api.RESTClient, repo, event string, workflowID int64) (int64, error) {
-	for {
-		var wRuns workflowRunsResponse
-		err := client.Get(fmt.Sprintf("repos/%s/actions/runs?event=%s", repo, event), &wRuns)
-		if err != nil {
-			return 0, err
-		}
-
-		// TODO: match on workflow name, or somehow more accurately ensure we are fetching
-		// _the_ workflow triggered by the `gh dispatch` command.
-		for _, run := range wRuns.WorkflowRuns {
-			// TODO: should this also try to match on run.triggering_actor.login?
-			if run.Status != shared.Completed && run.WorkflowID == int(workflowID) {
-				return run.ID, nil
-			}
-		}
-	}
+// ghRepo satisfies the ghrepo interface...
+// See github.com/cli/cli/v2/internal/ghrepo.
+type ghRepo struct {
+	Name  string
+	Owner string
 }
 
-func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *shared.Run) error {
+func (r ghRepo) RepoName() string {
+	return r.Name
+}
+
+func (r ghRepo) RepoOwner() string {
+	return r.Owner
+}
+
+func (r ghRepo) RepoHost() string {
+	host, _ := auth.DefaultHost()
+
+	return host
+}
+
+func (r ghRepo) RepoFullName() string {
+	return fmt.Sprintf("%s/%s", r.RepoOwner(), r.RepoName())
+}
+
+func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *shared.Run) error {
 	cs := ios.ColorScheme()
 	annotationCache := map[int64][]shared.Annotation{}
 	out := &bytes.Buffer{}
@@ -68,10 +86,11 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 		// If not completed, refresh the screen buffer and write the temporary buffer to stdout
 		ios.RefreshScreen()
 
+		// TODO: should the refresh interval be configurable?
 		interval := 2
 		fmt.Fprintln(ios.Out, cs.Boldf("Refreshing run status every %d seconds. Press Ctrl+C to quit.", interval))
 		fmt.Fprintln(ios.Out)
-		fmt.Fprintln(ios.Out, cs.Boldf("https://github.com/%s/actions/runs/%d", repo, run.ID))
+		fmt.Fprintln(ios.Out, cs.Boldf("https://github.com/%s/actions/runs/%d", repo.RepoFullName(), run.ID))
 		fmt.Fprintln(ios.Out)
 
 		_, err = io.Copy(ios.Out, out)
@@ -104,13 +123,15 @@ func render(ios *iostreams.IOStreams, client api.RESTClient, repo string, run *s
 	return nil
 }
 
-func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, repo string, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
-	run, err := getRun(client, repo, run.ID)
+// renderRun is largely an emulation of the upstream 'gh run watch' implementation...
+// https://github.com/cli/cli/blob/v2.20.2/pkg/cmd/run/watch/watch.go
+func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, repo *ghRepo, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
+	run, err := shared.GetRun(client, repo, fmt.Sprintf("%d", run.ID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get run: %w", err)
 	}
 
-	jobs, err := getJobs(client, repo, run.ID)
+	jobs, err := shared.GetJobs(client, repo, *run)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get jobs: %w", err)
 	}
@@ -124,7 +145,7 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, 
 			continue
 		}
 
-		as, annotationErr = getAnnotations(client, repo, job)
+		as, annotationErr = shared.GetAnnotations(client, repo, job)
 		if annotationErr != nil {
 			break
 		}
@@ -139,6 +160,7 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, 
 		return nil, fmt.Errorf("failed to get annotations: %w", annotationErr)
 	}
 
+	fmt.Fprintln(out, shared.RenderRunHeader(cs, *run, "", ""))
 	fmt.Fprintln(out)
 
 	if len(jobs) == 0 {
@@ -157,38 +179,27 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client api.RESTClient, 
 	return run, nil
 }
 
-func getRun(client api.RESTClient, repo string, runID int64) (*shared.Run, error) {
-	var result shared.Run
-	err := client.Get(fmt.Sprintf("repos/%s/actions/runs/%d", repo, runID), &result)
+func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int64) (int64, error) {
+	actor, err := cliapi.CurrentLoginName(client, repo.RepoHost())
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return &result, nil
-}
+	for {
+		runs, err := shared.GetRunsWithFilter(client, repo, &shared.FilterOptions{
+			WorkflowID: workflowID,
+			Actor:      actor,
+		}, 1, func(run shared.Run) bool {
+			// TODO: should this try to match on a branch too?
+			// https://github.com/cli/cli/blob/trunk/pkg/cmd/run/shared/shared.go#L281
+			return run.Status != shared.Completed && run.WorkflowID == workflowID && run.Event == event
+		})
+		if err != nil {
+			return 0, err
+		}
 
-func getJobs(client api.RESTClient, repo string, runID int64) ([]shared.Job, error) {
-	var result shared.JobsPayload
-	err := client.Get(fmt.Sprintf("repos/%s/actions/runs/%d/attempts/1/jobs", repo, runID), &result)
-	if err != nil {
-		return nil, err
+		if len(runs) > 0 {
+			return runs[0].ID, nil
+		}
 	}
-
-	return result.Jobs, nil
-}
-
-func getAnnotations(client api.RESTClient, repo string, job shared.Job) ([]shared.Annotation, error) {
-	var result []*shared.Annotation
-	err := client.Get(fmt.Sprintf("repos/%s/check-runs/%d/annotations", repo, job.ID), &result)
-	if err != nil {
-		return nil, err
-	}
-
-	annotations := []shared.Annotation{}
-	for _, annotation := range result {
-		annotation.JobName = job.Name
-		annotations = append(annotations, *annotation)
-	}
-
-	return annotations, nil
 }

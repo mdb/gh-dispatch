@@ -2,6 +2,7 @@ package dispatch
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"testing"
 
@@ -11,8 +12,14 @@ import (
 )
 
 func TestWorkflowDispatchRun(t *testing.T) {
-	repo := "OWNER/REPO"
+	ghRepo := &ghRepo{
+		Owner: "OWNER",
+		Name:  "REPO",
+	}
+	repo := ghRepo.RepoFullName()
 	workflow := "workflow.yaml"
+	event := "workflow_dispatch"
+
 	tests := []struct {
 		name      string
 		opts      *workflowDispatchOptions
@@ -37,36 +44,76 @@ func TestWorkflowDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/workflow.yaml", repo)),
 					httpmock.StringResponse(getWorkflowResponse))
 
+				reg.Register(
+					httpmock.GraphQL("query UserCurrent{viewer{login}}"),
+					httpmock.StringResponse(currentUserResponse))
+
 				v := url.Values{}
-				v.Set("event", "workflow_dispatch")
+				v.Set("per_page", "50")
 
 				reg.Register(
-					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/runs", repo), v),
-					httpmock.StringResponse(getWorkflowRunsResponse))
+					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
+
+				q := url.Values{}
+				q.Set("per_page", "100")
+				q.Set("page", "1")
 
 				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
-					httpmock.StringResponse(`{
-						"id": 123
-					}`))
+					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows", repo), q),
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
 						"id": 123,
-						"status": "completed",
-						"conclusion": "success"
+						"workflow_id": 456,
+						"event": "workflow_dispatch"
 					}`))
 
 				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
+					httpmock.StringResponse(fmt.Sprintf(`{
+						"id": 123,
+						"workflow_id": 456,
+						"event": "workflow_dispatch",
+						"status": "completed",
+						"conclusion": "success",
+						"jobs_url": "https://api.github.com/repos/%s/actions/runs/123/jobs"
+					}`, repo)))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/jobs", repo)),
 					httpmock.StringResponse(getJobsResponse))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/check-runs/123/annotations", repo)),
 					httpmock.StringResponse("[]"))
 			},
-			wantOut: "Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/OWNER/REPO/actions/runs/123\n\n\nJOBS\n✓ build in 1m59s (ID 123)\n  ✓ Run actions/checkout@v2\n  ✓ Test\n",
+			wantOut: `Refreshing run status every 2 seconds. Press Ctrl+C to quit.
+
+https://github.com/OWNER/REPO/actions/runs/123
+
+✓  foo · 123
+Triggered via workflow_dispatch 
+
+JOBS
+✓ build in 1m59s (ID 123)
+  ✓ Run actions/checkout@v2
+  ✓ Test
+`,
 		}, {
 			name: "unsuccessful workflow run",
 			opts: &workflowDispatchOptions{
@@ -83,36 +130,77 @@ func TestWorkflowDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/workflow.yaml", repo)),
 					httpmock.StringResponse(getWorkflowResponse))
 
+				reg.Register(
+					httpmock.GraphQL("query UserCurrent{viewer{login}}"),
+					httpmock.StringResponse(currentUserResponse))
+
 				v := url.Values{}
-				v.Set("event", "workflow_dispatch")
+				v.Set("per_page", "50")
 
 				reg.Register(
-					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/runs", repo), v),
-					httpmock.StringResponse(getWorkflowRunsResponse))
+					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
+
+				q := url.Values{}
+				q.Set("per_page", "100")
+				q.Set("page", "1")
 
 				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
-					httpmock.StringResponse(`{
-						"id": 123
-					}`))
+					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows", repo), q),
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
+
+				// TODO: is this correct? is it the correct response?
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
 						"id": 123,
-						"status": "completed",
-						"conclusion": "failure"
+						"workflow_id": 456,
+						"event": "workflow_dispatch"
 					}`))
 
 				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
+					httpmock.StringResponse(getWorkflowResponse))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
+					httpmock.StringResponse(fmt.Sprintf(`{
+						"id": 123,
+						"workflow_id": 456,
+						"event": "workflow_dispatch",
+						"status": "completed",
+						"conclusion": "failure",
+						"jobs_url": "https://api.github.com/repos/%s/actions/runs/123/jobs"
+					}`, repo)))
+
+				reg.Register(
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/jobs", repo)),
 					httpmock.StringResponse(getFailingJobsResponse))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/check-runs/123/annotations", repo)),
 					httpmock.StringResponse("[]"))
 			},
-			wantOut: "Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/OWNER/REPO/actions/runs/123\n\n\nJOBS\n✓ build in 1m59s (ID 123)\n  ✓ Run actions/checkout@v2\n  X Test\n",
+			wantOut: `Refreshing run status every 2 seconds. Press Ctrl+C to quit.
+
+https://github.com/OWNER/REPO/actions/runs/123
+
+X  foo · 123
+Triggered via workflow_dispatch 
+
+JOBS
+✓ build in 1m59s (ID 123)
+  ✓ Run actions/checkout@v2
+  X Test
+`,
 			wantErr: true,
 			errMsg:  "SilentError",
 		}, {
@@ -139,10 +227,11 @@ func TestWorkflowDispatchRun(t *testing.T) {
 		ios.SetStdoutTTY(false)
 		ios.SetAlternateScreenBufferEnabled(false)
 
-		tt.opts.repo = repo
+		tt.opts.repo = ghRepo
 		tt.opts.io = ios
-		tt.opts.httpTransport = reg
-		tt.opts.authToken = "123"
+		tt.opts.httpClient = &http.Client{
+			Transport: reg,
+		}
 
 		t.Run(tt.name, func(t *testing.T) {
 			err := workflowDispatchRun(tt.opts)
@@ -156,6 +245,7 @@ func TestWorkflowDispatchRun(t *testing.T) {
 			if got := stdout.String(); got != tt.wantOut {
 				t.Errorf("got stdout:\n%q\nwant:\n%q", got, tt.wantOut)
 			}
+
 			reg.Verify(t)
 		})
 	}

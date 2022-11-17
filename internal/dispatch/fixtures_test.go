@@ -1,6 +1,14 @@
 package dispatch
 
 var (
+	currentUserResponse string = `{
+		"data": {
+			"viewer": {
+				"login": "mdb"
+			}
+		}
+	}`
+
 	getWorkflowsResponse string = `{
 		"total_count": 1,
 		"workflows": [{
@@ -10,7 +18,8 @@ var (
 	}`
 
 	getWorkflowResponse string = `{
-		"id": 456
+		"id": 456,
+		"name": "foo"
 	}`
 
 	getWorkflowRunsResponse string = `{
@@ -18,9 +27,11 @@ var (
 		"workflow_runs": [{
 			"id": 123,
 			"workflow_id": 456,
+			"event": "%s",
 			"name": "foo",
 			"status": "queued",
-			"conclusion": null
+			"conclusion": null,
+			"jobs_url": "https://api.github.com/repos/%s/actions/runs/123/jobs"
 		}]
 	}`
 
