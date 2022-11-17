@@ -45,7 +45,7 @@ func TestWorkflowDispatchRun(t *testing.T) {
 					httpmock.StringResponse(getWorkflowResponse))
 
 				v := url.Values{}
-				v.Set("per_page", "100")
+				v.Set("per_page", "50")
 
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
@@ -128,7 +128,7 @@ JOBS
 					httpmock.StringResponse(getWorkflowResponse))
 
 				v := url.Values{}
-				v.Set("per_page", "100")
+				v.Set("per_page", "50")
 
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),

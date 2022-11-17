@@ -188,14 +188,15 @@ func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int6
 			// Alternatively, should FilterOptions have an Event field?
 			// https://github.com/cli/cli/blob/trunk/pkg/cmd/run/shared/shared.go#L281
 			WorkflowID: workflowID,
-		}, 100)
+		}, 50)
 		if err != nil {
 			return 0, err
 		}
 
 		// TODO: match on workflow name, or somehow more accurately ensure we are fetching
 		// _the_ workflow triggered by the `gh dispatch` command.
-		// TODO: also match on event
+		// TODO: it might be better to replace all of this with shared.GetRunsWithFilter, which
+		// accepts a filter func.
 		for _, run := range runs.WorkflowRuns {
 			// TODO: should this also try to match on run.triggering_actor.login?
 			if run.Status != shared.Completed && run.WorkflowID == workflowID && run.Event == event {
