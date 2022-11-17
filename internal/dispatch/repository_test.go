@@ -57,17 +57,14 @@ func TestRepositoryDispatchRun(t *testing.T) {
 				q.Set("per_page", "100")
 				q.Set("page", "1")
 
-				// TODO: is this correct? is it the correct response?
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows", repo), q),
 					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event, repo)))
 
-				// TODO: is this correct? is it the correct response?
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
 					httpmock.StringResponse(getWorkflowResponse))
 
-				// TODO: is this correct? is it the correct response?
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
 					httpmock.StringResponse(getWorkflowResponse))
