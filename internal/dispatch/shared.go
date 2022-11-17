@@ -15,11 +15,6 @@ import (
 	"github.com/cli/go-gh/pkg/config"
 )
 
-const (
-	// TODO: could githubHost be dynamically detected?
-	githubHost string = "github.com"
-)
-
 // Conf implements the cliapi tokenGetter interface
 type Conf struct {
 	*config.Config
@@ -65,7 +60,9 @@ func (r ghRepo) RepoOwner() string {
 }
 
 func (r ghRepo) RepoHost() string {
-	return githubHost
+	host, _ := auth.DefaultHost()
+
+	return host
 }
 
 func (r ghRepo) RepoFullName() string {
@@ -89,6 +86,7 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *
 		// If not completed, refresh the screen buffer and write the temporary buffer to stdout
 		ios.RefreshScreen()
 
+		// TODO: should the refresh interval be configurable?
 		interval := 2
 		fmt.Fprintln(ios.Out, cs.Boldf("Refreshing run status every %d seconds. Press Ctrl+C to quit.", interval))
 		fmt.Fprintln(ios.Out)
@@ -183,25 +181,21 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, 
 
 func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int64) (int64, error) {
 	for {
-		runs, err := shared.GetRuns(client, repo, &shared.FilterOptions{
-			// TODO: should we detect/pass an Actor as well? Perhaps a Branch too?
-			// Alternatively, should FilterOptions have an Event field?
-			// https://github.com/cli/cli/blob/trunk/pkg/cmd/run/shared/shared.go#L281
+		runs, err := shared.GetRunsWithFilter(client, repo, &shared.FilterOptions{
+
 			WorkflowID: workflowID,
-		}, 50)
+		}, 1, func(run shared.Run) bool {
+			// TODO: should this also try to match on run.actor.login?
+			// TODO: should this try to match on a branch too?
+			// https://github.com/cli/cli/blob/trunk/pkg/cmd/run/shared/shared.go#L281
+			return run.Status != shared.Completed && run.WorkflowID == workflowID && run.Event == event
+		})
 		if err != nil {
 			return 0, err
 		}
 
-		// TODO: match on workflow name, or somehow more accurately ensure we are fetching
-		// _the_ workflow triggered by the `gh dispatch` command.
-		// TODO: it might be better to replace all of this with shared.GetRunsWithFilter, which
-		// accepts a filter func.
-		for _, run := range runs.WorkflowRuns {
-			// TODO: should this also try to match on run.triggering_actor.login?
-			if run.Status != shared.Completed && run.WorkflowID == workflowID && run.Event == event {
-				return run.ID, nil
-			}
+		if len(runs) > 0 {
+			return runs[0].ID, nil
 		}
 	}
 }
@@ -209,7 +203,7 @@ func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int6
 // TODO: could this be replaced by shared.GetJobs?
 func getJobs(client *cliapi.Client, repo *ghRepo, runID int64) ([]shared.Job, error) {
 	var result shared.JobsPayload
-	err := client.REST(githubHost, "GET", fmt.Sprintf("repos/%s/actions/runs/%d/attempts/1/jobs", repo.RepoFullName(), runID), nil, &result)
+	err := client.REST(repo.RepoHost(), "GET", fmt.Sprintf("repos/%s/actions/runs/%d/attempts/1/jobs", repo.RepoFullName(), runID), nil, &result)
 	if err != nil {
 		return nil, err
 	}

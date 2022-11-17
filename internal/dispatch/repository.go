@@ -112,13 +112,13 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
 
 	var in interface{}
-	err = ghClient.REST(githubHost, "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo.RepoFullName()), &buf, &in)
+	err = ghClient.REST(opts.repo.RepoHost(), "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo.RepoFullName()), &buf, &in)
 	if err != nil {
 		return err
 	}
 
 	var wfs shared.WorkflowsPayload
-	err = ghClient.REST(githubHost, "GET", fmt.Sprintf("repos/%s/actions/workflows", opts.repo.RepoFullName()), nil, &wfs)
+	err = ghClient.REST(opts.repo.RepoHost(), "GET", fmt.Sprintf("repos/%s/actions/workflows", opts.repo.RepoFullName()), nil, &wfs)
 	if err != nil {
 		return err
 	}
