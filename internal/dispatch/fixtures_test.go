@@ -1,6 +1,14 @@
 package dispatch
 
 var (
+	currentUserResponse string = `{
+		"data": {
+			"viewer": {
+				"login": "mdb"
+			}
+		}
+	}`
+
 	getWorkflowsResponse string = `{
 		"total_count": 1,
 		"workflows": [{

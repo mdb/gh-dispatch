@@ -42,6 +42,10 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows", repo)),
 					httpmock.StringResponse(getWorkflowsResponse))
 
+				reg.Register(
+					httpmock.GraphQL("query UserCurrent{viewer{login}}"),
+					httpmock.StringResponse(currentUserResponse))
+
 				v := url.Values{}
 				v.Set("per_page", "50")
 
@@ -125,6 +129,10 @@ JOBS
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows", repo)),
 					httpmock.StringResponse(getWorkflowsResponse))
+
+				reg.Register(
+					httpmock.GraphQL("query UserCurrent{viewer{login}}"),
+					httpmock.StringResponse(currentUserResponse))
 
 				v := url.Values{}
 				v.Set("per_page", "50")
