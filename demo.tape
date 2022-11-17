@@ -46,7 +46,7 @@ Set FontSize 28
 Set Width 1200
 Set Height 650
 
-Type 'gh dispatch repository --repo "mdb/gh-dispatch" --event-type "hello" --client-payload "{\"name\": \"mike\"}" --workflow "Hello"'
+Type 'gh dispatch repository --event-type "hello" --client-payload "{\"name\": \"mike\"}" --workflow "Hello"'
 
 Sleep 500ms
 
