@@ -51,7 +51,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
-					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event, repo)))
 
 				q := url.Values{}
 				q.Set("per_page", "100")
@@ -60,7 +60,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 				// TODO: is this correct? is it the correct response?
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows", repo), q),
-					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event, repo)))
 
 				// TODO: is this correct? is it the correct response?
 				reg.Register(
@@ -86,16 +86,17 @@ func TestRepositoryDispatchRun(t *testing.T) {
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
-					httpmock.StringResponse(`{
+					httpmock.StringResponse(fmt.Sprintf(`{
 						"id": 123,
 						"workflow_id": 456,
-						"event": "repository_dispatch",
 						"status": "completed",
-						"conclusion": "success"
-					}`))
+						"event": "repository_dispatch",
+						"conclusion": "success",
+						"jobs_url": "https://api.github.com/repos/%s/actions/runs/123/jobs"
+					}`, repo)))
 
 				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/jobs", repo)),
 					httpmock.StringResponse(getJobsResponse))
 
 				reg.Register(
@@ -139,7 +140,7 @@ JOBS
 
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
-					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event, repo)))
 
 				q := url.Values{}
 				q.Set("per_page", "100")
@@ -148,7 +149,7 @@ JOBS
 				// TODO: is this correct? is it the correct response?
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows", repo), q),
-					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event, repo)))
 
 				// TODO: is this correct? is it the correct response?
 				reg.Register(
@@ -174,16 +175,17 @@ JOBS
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
-					httpmock.StringResponse(`{
+					httpmock.StringResponse(fmt.Sprintf(`{
 						"id": 123,
 						"workflow_id": 456,
 						"status": "completed",
 						"event": "repository_dispatch",
-						"conclusion": "failure"
-					}`))
+						"conclusion": "failure",
+						"jobs_url": "https://api.github.com/repos/%s/actions/runs/123/jobs"
+					}`, repo)))
 
 				reg.Register(
-					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/attempts/1/jobs", repo)),
+					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/jobs", repo)),
 					httpmock.StringResponse(getFailingJobsResponse))
 
 				reg.Register(

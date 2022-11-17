@@ -131,7 +131,7 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, 
 		return nil, fmt.Errorf("failed to get run: %w", err)
 	}
 
-	jobs, err := getJobs(client, repo, run.ID)
+	jobs, err := shared.GetJobs(client, repo, *run)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get jobs: %w", err)
 	}
@@ -202,15 +202,4 @@ func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int6
 			return runs[0].ID, nil
 		}
 	}
-}
-
-// TODO: could this be replaced by shared.GetJobs?
-func getJobs(client *cliapi.Client, repo *ghRepo, runID int64) ([]shared.Job, error) {
-	var result shared.JobsPayload
-	err := client.REST(repo.RepoHost(), "GET", fmt.Sprintf("repos/%s/actions/runs/%d/attempts/1/jobs", repo.RepoFullName(), runID), nil, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result.Jobs, nil
 }
