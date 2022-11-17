@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	// TODO: could githubHost be dynamically detected?
 	githubHost string = "github.com"
 )
 
@@ -48,6 +49,8 @@ type dispatchOptions struct {
 	io         *iostreams.IOStreams
 }
 
+// ghRepo satisfies the ghrepo interface...
+// See github.com/cli/cli/v2/internal/ghrepo.
 type ghRepo struct {
 	Name  string
 	Owner string
