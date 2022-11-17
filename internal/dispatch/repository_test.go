@@ -71,7 +71,8 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
 						"id": 123,
-						"workflow_id": 456
+						"workflow_id": 456,
+						"event": "repository_dispatch"
 					}`))
 
 				reg.Register(
@@ -83,6 +84,7 @@ func TestRepositoryDispatchRun(t *testing.T) {
 					httpmock.StringResponse(`{
 						"id": 123,
 						"workflow_id": 456,
+						"event": "repository_dispatch",
 						"status": "completed",
 						"conclusion": "success"
 					}`))
@@ -99,6 +101,8 @@ func TestRepositoryDispatchRun(t *testing.T) {
 
 https://github.com/OWNER/REPO/actions/runs/123
 
+✓  foo · 123
+Triggered via repository_dispatch 
 
 JOBS
 ✓ build in 1m59s (ID 123)
@@ -151,7 +155,8 @@ JOBS
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 					httpmock.StringResponse(`{
 						"id": 123,
-						"workflow_id": 456
+						"workflow_id": 456,
+						"event": "repository_dispatch"
 					}`))
 
 				reg.Register(
@@ -164,6 +169,7 @@ JOBS
 						"id": 123,
 						"workflow_id": 456,
 						"status": "completed",
+						"event": "repository_dispatch",
 						"conclusion": "failure"
 					}`))
 
@@ -179,6 +185,8 @@ JOBS
 
 https://github.com/OWNER/REPO/actions/runs/123
 
+X  foo · 123
+Triggered via repository_dispatch 
 
 JOBS
 ✓ build in 1m59s (ID 123)

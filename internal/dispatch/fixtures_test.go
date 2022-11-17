@@ -10,7 +10,8 @@ var (
 	}`
 
 	getWorkflowResponse string = `{
-		"id": 456
+		"id": 456,
+		"name": "foo"
 	}`
 
 	getWorkflowRunsResponse string = `{

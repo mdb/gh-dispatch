@@ -159,7 +159,7 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, 
 		return nil, fmt.Errorf("failed to get annotations: %w", annotationErr)
 	}
 
-	//fmt.Fprintln(out, shared.RenderRunHeader(cs, *run, "", ""))
+	fmt.Fprintln(out, shared.RenderRunHeader(cs, *run, "", ""))
 	fmt.Fprintln(out)
 
 	if len(jobs) == 0 {
