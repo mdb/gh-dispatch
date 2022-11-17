@@ -19,6 +19,7 @@ var (
 		"workflow_runs": [{
 			"id": 123,
 			"workflow_id": 456,
+			"event": "%s",
 			"name": "foo",
 			"status": "queued",
 			"conclusion": null

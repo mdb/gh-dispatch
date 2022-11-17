@@ -18,6 +18,7 @@ func TestWorkflowDispatchRun(t *testing.T) {
 	}
 	repo := ghRepo.RepoFullName()
 	workflow := "workflow.yaml"
+	event := "workflow_dispatch"
 
 	tests := []struct {
 		name      string
@@ -48,7 +49,7 @@ func TestWorkflowDispatchRun(t *testing.T) {
 
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
-					httpmock.StringResponse(getWorkflowRunsResponse))
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
 
 				q := url.Values{}
 				q.Set("per_page", "100")
@@ -57,7 +58,7 @@ func TestWorkflowDispatchRun(t *testing.T) {
 				// TODO: is this correct? is it the correct response?
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows", repo), q),
-					httpmock.StringResponse(getWorkflowRunsResponse))
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
 
 				// TODO: is this correct? is it the correct response?
 				reg.Register(
@@ -131,7 +132,7 @@ JOBS
 
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
-					httpmock.StringResponse(getWorkflowRunsResponse))
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
 
 				q := url.Values{}
 				q.Set("per_page", "100")
@@ -140,7 +141,7 @@ JOBS
 				// TODO: is this correct? is it the correct response?
 				reg.Register(
 					httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows", repo), q),
-					httpmock.StringResponse(getWorkflowRunsResponse))
+					httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
 
 				// TODO: is this correct? is it the correct response?
 				reg.Register(

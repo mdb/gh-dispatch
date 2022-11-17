@@ -198,7 +198,7 @@ func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int6
 		// TODO: also match on event
 		for _, run := range runs.WorkflowRuns {
 			// TODO: should this also try to match on run.triggering_actor.login?
-			if run.Status != shared.Completed && run.WorkflowID == workflowID {
+			if run.Status != shared.Completed && run.WorkflowID == workflowID && run.Event == event {
 				return run.ID, nil
 			}
 		}
