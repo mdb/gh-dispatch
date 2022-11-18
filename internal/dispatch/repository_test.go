@@ -63,10 +63,10 @@ func TestRepositoryDispatchRun(t *testing.T) {
 		reg.Register(
 			httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 			httpmock.StringResponse(`{
-						"id": 123,
-						"workflow_id": 456,
-						"event": "repository_dispatch"
-					}`))
+				"id": 123,
+				"workflow_id": 456,
+				"event": "repository_dispatch"
+			}`))
 
 		reg.Register(
 			httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
@@ -75,13 +75,13 @@ func TestRepositoryDispatchRun(t *testing.T) {
 		reg.Register(
 			httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
 			httpmock.StringResponse(fmt.Sprintf(`{
-						"id": 123,
-						"workflow_id": 456,
-						"status": "completed",
-						"event": "repository_dispatch",
-						"conclusion": "%s",
-						"jobs_url": "https://api.github.com/repos/%s/actions/runs/123/jobs"
-					}`, conclusion, repo)))
+				"id": 123,
+				"workflow_id": 456,
+				"status": "completed",
+				"event": "repository_dispatch",
+				"conclusion": "%s",
+				"jobs_url": "https://api.github.com/repos/%s/actions/runs/123/jobs"
+			}`, conclusion, repo)))
 
 		reg.Register(
 			httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/jobs", repo)),
