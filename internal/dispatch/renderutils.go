@@ -4,70 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"net/http"
 	"time"
 
 	cliapi "github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/go-gh/pkg/auth"
-	"github.com/cli/go-gh/pkg/config"
 )
-
-// Conf implements the cliapi tokenGetter interface
-type Conf struct {
-	*config.Config
-}
-
-// AuthToken implements the cliapi tokenGetter interface
-// by providing a method for retrieving the auth token.
-func (c *Conf) AuthToken(hostname string) (string, string) {
-	return auth.TokenForHost(hostname)
-}
-
-type workflowRun struct {
-	ID         int64         `json:"id"`
-	WorkflowID int           `json:"workflow_id"`
-	Name       string        `json:"name"`
-	Status     shared.Status `json:"status"`
-	Conclusion string        `json:"conclusion"`
-}
-
-type workflowRunsResponse struct {
-	WorkflowRuns []workflowRun `json:"workflow_runs"`
-}
-
-type dispatchOptions struct {
-	repo       *ghRepo
-	httpClient *http.Client
-	io         *iostreams.IOStreams
-}
-
-// ghRepo satisfies the ghrepo interface...
-// See github.com/cli/cli/v2/internal/ghrepo.
-type ghRepo struct {
-	Name  string
-	Owner string
-}
-
-func (r ghRepo) RepoName() string {
-	return r.Name
-}
-
-func (r ghRepo) RepoOwner() string {
-	return r.Owner
-}
-
-func (r ghRepo) RepoHost() string {
-	host, _ := auth.DefaultHost()
-
-	return host
-}
-
-func (r ghRepo) RepoFullName() string {
-	return fmt.Sprintf("%s/%s", r.RepoOwner(), r.RepoName())
-}
 
 func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *shared.Run) error {
 	cs := ios.ColorScheme()
