@@ -26,6 +26,7 @@ type repositoryDispatchOptions struct {
 	dispatchOptions
 }
 
+// NewCmdRepository returns a new repository command.
 func NewCmdRepository() *cobra.Command {
 	var (
 		repositoryEventType     string
@@ -100,6 +101,8 @@ func NewCmdRepository() *cobra.Command {
 }
 
 func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
+	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
+
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(repositoryDispatchRequest{
 		EventType:     opts.eventType,
@@ -108,8 +111,6 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	if err != nil {
 		return err
 	}
-
-	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
 
 	var in interface{}
 	err = ghClient.REST(opts.repo.RepoHost(), "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo.RepoFullName()), &buf, &in)

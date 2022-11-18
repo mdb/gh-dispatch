@@ -26,6 +26,7 @@ type workflowDispatchOptions struct {
 	dispatchOptions
 }
 
+// NewCmdWorkflow returns a new workflow command.
 func NewCmdWorkflow() *cobra.Command {
 	var (
 		workflowInputs string
@@ -110,6 +111,8 @@ func NewCmdWorkflow() *cobra.Command {
 }
 
 func workflowDispatchRun(opts *workflowDispatchOptions) error {
+	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
+
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(workflowDispatchRequest{
 		Inputs: opts.inputs,
@@ -118,8 +121,6 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 	if err != nil {
 		return err
 	}
-
-	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
 
 	var in interface{}
 	err = ghClient.REST(opts.repo.RepoHost(), "POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", opts.repo.RepoFullName(), opts.workflow), &buf, &in)
