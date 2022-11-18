@@ -36,7 +36,12 @@ func TestRepositoryDispatchRun(t *testing.T) {
 			httpStubs: func(reg *httpmock.Registry) {
 				reg.Register(
 					httpmock.REST("POST", fmt.Sprintf("repos/%s/dispatches", repo)),
-					httpmock.StringResponse("{}"))
+					httpmock.RESTPayload(201, "{}", func(params map[string]interface{}) {
+						assert.Equal(t, map[string]interface{}{
+							"event_type":     "hello",
+							"client_payload": interface{}(nil),
+						}, params)
+					}))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows", repo)),
@@ -119,10 +124,14 @@ JOBS
 				workflow:  "foo",
 			},
 			httpStubs: func(reg *httpmock.Registry) {
-				// TODO: test that proper request body is sent on POSTs
 				reg.Register(
 					httpmock.REST("POST", fmt.Sprintf("repos/%s/dispatches", repo)),
-					httpmock.StringResponse("{}"))
+					httpmock.RESTPayload(201, "{}", func(params map[string]interface{}) {
+						assert.Equal(t, map[string]interface{}{
+							"event_type":     "hello",
+							"client_payload": interface{}(nil),
+						}, params)
+					}))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows", repo)),

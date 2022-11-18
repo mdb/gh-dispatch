@@ -35,10 +35,14 @@ func TestWorkflowDispatchRun(t *testing.T) {
 				workflow: workflow,
 			},
 			httpStubs: func(reg *httpmock.Registry) {
-				// TODO: test that proper request body is sent on POSTs
 				reg.Register(
 					httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
-					httpmock.StringResponse("{}"))
+					httpmock.RESTPayload(201, "{}", func(params map[string]interface{}) {
+						assert.Equal(t, map[string]interface{}{
+							"inputs": "{\"foo\": \"bar\"}",
+							"ref":    "",
+						}, params)
+					}))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/workflow.yaml", repo)),
@@ -121,10 +125,14 @@ JOBS
 				workflow: workflow,
 			},
 			httpStubs: func(reg *httpmock.Registry) {
-				// TODO: test that proper request body is sent on POSTs
 				reg.Register(
 					httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
-					httpmock.StringResponse("{}"))
+					httpmock.RESTPayload(201, "{}", func(params map[string]interface{}) {
+						assert.Equal(t, map[string]interface{}{
+							"inputs": "{\"foo\": \"bar\"}",
+							"ref":    "",
+						}, params)
+					}))
 
 				reg.Register(
 					httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/workflow.yaml", repo)),
