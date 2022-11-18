@@ -1,6 +1,6 @@
 SOURCE=./...
 GOFMT_FILES?=$$(find . -type f -name '*.go')
-VERSION?=0.1.0
+VERSION?=0.1.1
 
 default: build
 
