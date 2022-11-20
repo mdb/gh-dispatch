@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	cliapi "github.com/cli/cli/v2/api"
@@ -65,11 +64,9 @@ func NewCmdWorkflow() *cobra.Command {
 			--ref my-feature-branch
 	`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			r, _ := cmd.Flags().GetString("repo")
-			repoParts := strings.Split(r, "/")
-			repo := &ghRepo{
-				Owner: repoParts[0],
-				Name:  repoParts[1],
+			repo, err := getRepoOption(cmd)
+			if err != nil {
+				return err
 			}
 
 			b := []byte(workflowInputs)

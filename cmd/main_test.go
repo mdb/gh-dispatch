@@ -41,7 +41,7 @@ Available Commands:
 
 Flags:
   -h, --help          help for gh
-  -R, --repo string   The targeted repository's full name (in 'owner/repo' format) (default "mdb/gh-dispatch")
+  -R, --repo string   The targeted repository's full name (default "github.com/mdb/gh-dispatch")
   -v, --version       version for gh
 
 Use "gh [command] --help" for more information about a command.
