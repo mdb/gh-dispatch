@@ -1,11 +1,14 @@
 package dispatch
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
 )
+
+var errUnspecifiedRepo = errors.New("A --repo must be specified in the [HOST/]OWNER/REPO format")
 
 type workflowRun struct {
 	ID         int64         `json:"id"`
