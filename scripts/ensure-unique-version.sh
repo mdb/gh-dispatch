@@ -6,7 +6,7 @@ repo="mdb/gh-dispatch"
 result="$(curl \
   --header "Accept: application/vnd.github.v3+json" \
   --write "%{http_code}" \
-  --out "/dev/null" \
+  --output "/dev/null" \
   "https://api.github.com/repos/${repo}/releases/tags/${version}")"
 
 if [ "${result}" = "404" ]; then
