@@ -5,7 +5,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -14,17 +13,6 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestMain(m *testing.M) {
-	// compile a 'gh-dispatch' for for use in running tests
-	exe := exec.Command("go", "build", "-ldflags", "-X main.version=test", "-o", "gh-dispatch")
-	err := exe.Run()
-	if err != nil {
-		os.Exit(1)
-	}
-
-	os.Exit(m.Run())
-}
 
 func TestRootAcceptance(t *testing.T) {
 	basicOut := heredoc.Doc(`Send a workflow_dispatch or repository_dispatch event and watch the resulting
