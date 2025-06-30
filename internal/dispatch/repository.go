@@ -115,14 +115,13 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	var wfs shared.WorkflowsPayload
-	err = ghClient.REST(opts.repo.RepoHost(), "GET", fmt.Sprintf("repos/%s/actions/workflows", opts.repo.RepoFullName()), nil, &wfs)
+	wfs, err := getWorkflows(ghClient, opts.repo.RepoHost(), opts.repo.RepoFullName())
 	if err != nil {
 		return err
 	}
 
 	var workflowID int64
-	for _, wf := range wfs.Workflows {
+	for _, wf := range wfs {
 		if wf.Name == opts.workflow {
 			workflowID = wf.ID
 			break
@@ -140,4 +139,28 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	}
 
 	return render(opts.io, ghClient, opts.repo, run)
+}
+
+func getWorkflows(client *cliapi.Client, repoHost string, repoFullName string) ([]shared.Workflow, error) {
+	perPage := 100
+	page := 1
+	workflows := []shared.Workflow{}
+
+	for {
+		result := shared.WorkflowsPayload{}
+		path := fmt.Sprintf("repos/%s/actions/workflows?per_page=%d&page=%d", repoFullName, perPage, page)
+		err := client.REST(repoHost, "GET", path, nil, &result)
+		if err != nil {
+			return nil, err
+		}
+
+		workflows = append(workflows, result.Workflows...)
+		if len(result.Workflows) < perPage {
+			break
+		}
+
+		page++
+	}
+
+	return workflows, nil
 }
