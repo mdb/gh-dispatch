@@ -24,7 +24,7 @@ test: vet fmtcheck
 .PHONY: test
 
 acc-test:
-	go test -v --tags=acceptance $(SOURCE)
+	go test -v --tags=acceptance -count=1 $(SOURCE)
 .PHONY: acceptance-test
 
 vet:
