@@ -14,12 +14,12 @@ import (
 )
 
 type repositoryDispatchRequest struct {
-	EventType     string      `json:"event_type"`
-	ClientPayload interface{} `json:"client_payload"`
+	EventType     string `json:"event_type"`
+	ClientPayload any    `json:"client_payload"`
 }
 
 type repositoryDispatchOptions struct {
-	clientPayload interface{}
+	clientPayload any
 	eventType     string
 	workflow      string
 	dispatchOptions
@@ -65,7 +65,7 @@ func NewCmdRepository() *cobra.Command {
 			}
 
 			b := []byte(repositoryClientPayload)
-			var repoClientPayload interface{}
+			var repoClientPayload any
 			json.Unmarshal(b, &repoClientPayload)
 
 			ios := iostreams.System()
@@ -109,7 +109,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	var in interface{}
+	var in any
 	err = ghClient.REST(opts.repo.RepoHost(), "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo.RepoFullName()), &buf, &in)
 	if err != nil {
 		return err

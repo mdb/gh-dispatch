@@ -14,12 +14,12 @@ import (
 )
 
 type workflowDispatchRequest struct {
-	Inputs interface{} `json:"inputs"`
-	Ref    string      `json:"ref"`
+	Inputs any    `json:"inputs"`
+	Ref    string `json:"ref"`
 }
 
 type workflowDispatchOptions struct {
-	inputs   interface{}
+	inputs   any
 	ref      string
 	workflow string
 	dispatchOptions
@@ -70,7 +70,7 @@ func NewCmdWorkflow() *cobra.Command {
 			}
 
 			b := []byte(workflowInputs)
-			var wInputs interface{}
+			var wInputs any
 			json.Unmarshal(b, &wInputs)
 
 			ios := iostreams.System()
@@ -119,7 +119,7 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 		return err
 	}
 
-	var in interface{}
+	var in any
 	err = ghClient.REST(opts.repo.RepoHost(), "POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", opts.repo.RepoFullName(), opts.workflow), &buf, &in)
 	if err != nil {
 		return err

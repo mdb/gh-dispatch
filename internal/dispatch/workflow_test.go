@@ -23,8 +23,8 @@ func TestWorkflowDispatchRun(t *testing.T) {
 	createMockRegistry := func(reg *httpmock.Registry, conclusion, jobsResponse string) {
 		reg.Register(
 			httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
-			httpmock.RESTPayload(201, "{}", func(params map[string]interface{}) {
-				assert.Equal(t, map[string]interface{}{
+			httpmock.RESTPayload(201, "{}", func(params map[string]any) {
+				assert.Equal(t, map[string]any{
 					"inputs": "{\"foo\": \"bar\"}",
 					"ref":    "",
 				}, params)

@@ -1,8 +1,12 @@
 SOURCE=./...
 GOFMT_FILES?=$$(find . -type f -name '*.go')
-VERSION?=0.1.4
+VERSION?=0.1.5
 
 default: build
+
+version:
+	@echo $(VERSION)
+.PHONY: version
 
 tools:
 	go install github.com/goreleaser/goreleaser@v1.11.4
