@@ -1,4 +1,4 @@
-[![CI/CD](https://github.com/mdb/gh-dispatch/actions/workflows/cicd.yaml/badge.svg)](https://github.com/mdb/gh-dispatch/actions/workflows/cicd.yaml)
+[![CI/CD](https://github.com/mdb/gh-dispatch/actions/workflows/cicd.yaml/badge.svg?branch=main)](https://github.com/mdb/gh-dispatch/actions/workflows/cicd.yaml)
 
 # gh-dispatch
 
