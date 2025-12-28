@@ -4,6 +4,10 @@ VERSION?=0.1.5
 
 default: build
 
+version:
+	@echo $(VERSION)
+.PHONY: version
+
 tools:
 	go install github.com/goreleaser/goreleaser@v1.11.4
 .PHONY: tools
