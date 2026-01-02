@@ -12,7 +12,7 @@ import (
 func getRepoOption(cmd *cobra.Command) (*ghRepo, error) {
 	r, _ := cmd.Flags().GetString("repo")
 	if r == "" {
-		return nil, errors.New("A --repo must be specified in the [HOST/]OWNER/REPO format")
+		return nil, errors.New("a --repo must be specified in the [HOST/]OWNER/REPO format")
 	}
 
 	repo, err := newGHRepo(r)

@@ -1,8 +1,12 @@
 SOURCE=./...
 GOFMT_FILES?=$$(find . -type f -name '*.go')
-VERSION?=0.1.4
+VERSION?=0.1.6
 
 default: build
+
+version:
+	@echo $(VERSION)
+.PHONY: version
 
 tools:
 	go install github.com/goreleaser/goreleaser@v1.11.4
@@ -20,7 +24,7 @@ test: vet fmtcheck
 .PHONY: test
 
 acc-test:
-	go test -v --tags=acceptance $(SOURCE)
+	go test -v --tags=acceptance -count=1 ./cmd
 .PHONY: acceptance-test
 
 vet:
