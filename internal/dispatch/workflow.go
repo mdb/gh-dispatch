@@ -6,10 +6,12 @@ import (
 	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
-	cliapi "github.com/cli/cli/v2/api"
+	"github.com/cli/cli/v2/api"
+	"github.com/cli/cli/v2/pkg/cmd/factory"
 	runShared "github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmd/workflow/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
+	cliapi "github.com/cli/go-gh/v2/pkg/api"
 	"github.com/spf13/cobra"
 )
 
@@ -74,12 +76,22 @@ func NewCmdWorkflow() *cobra.Command {
 			json.Unmarshal(b, &wInputs)
 
 			ios := iostreams.System()
-			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{
-				Config: &Conf{},
-			})
+			// TODO: account for host
+			ghClient, err := cliapi.DefaultRESTClient()
+			if err != nil {
+				return err
+			}
+
+			f := factory.New("0.0.0")
+			httpClient, err := f.HttpClient()
+			if err != nil {
+				return err
+			}
+
 			dOptions := dispatchOptions{
 				repo:       repo,
-				httpClient: ghClient,
+				client:     ghClient,
+				httpClient: httpClient,
 				io:         ios,
 			}
 
@@ -108,7 +120,7 @@ func NewCmdWorkflow() *cobra.Command {
 }
 
 func workflowDispatchRun(opts *workflowDispatchOptions) error {
-	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
+	ghClient := api.NewClientFromHTTP(opts.httpClient)
 
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(workflowDispatchRequest{
@@ -136,7 +148,7 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 		return err
 	}
 
-	run, err := runShared.GetRun(ghClient, opts.repo, fmt.Sprintf("%d", runID))
+	run, err := runShared.GetRun(ghClient, opts.repo, fmt.Sprintf("%d", runID), 0)
 	if err != nil {
 		return fmt.Errorf("failed to get run: %w", err)
 	}

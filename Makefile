@@ -1,6 +1,6 @@
 SOURCE=./...
 GOFMT_FILES?=$$(find . -type f -name '*.go')
-VERSION?=0.1.5
+VERSION?=0.1.6
 
 default: build
 
@@ -24,7 +24,7 @@ test: vet fmtcheck
 .PHONY: test
 
 acc-test:
-	go test -v --tags=acceptance $(SOURCE)
+	go test -v --tags=acceptance -count=1 ./cmd
 .PHONY: acceptance-test
 
 vet:
