@@ -6,13 +6,13 @@ import (
 	"io"
 	"time"
 
-	cliapi "github.com/cli/cli/v2/api"
+	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 )
 
-func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *shared.Run) error {
+func render(ios *iostreams.IOStreams, client *api.Client, repo *ghRepo, run *shared.Run) error {
 	cs := ios.ColorScheme()
 	annotationCache := map[int64][]shared.Annotation{}
 	out := &bytes.Buffer{}
@@ -68,7 +68,7 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *
 
 // renderRun is largely an emulation of the upstream 'gh run watch' implementation...
 // https://github.com/cli/cli/blob/v2.20.2/pkg/cmd/run/watch/watch.go
-func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, repo *ghRepo, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
+func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *api.Client, repo *ghRepo, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
 	run, err := shared.GetRun(client, repo, fmt.Sprintf("%d", run.ID), 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get run: %w", err)
@@ -122,8 +122,8 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, 
 	return run, nil
 }
 
-func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int64) (int64, error) {
-	actor, err := cliapi.CurrentLoginName(client, repo.RepoHost())
+func getRunID(client *api.Client, repo *ghRepo, event string, workflowID int64) (int64, error) {
+	actor, err := api.CurrentLoginName(client, repo.RepoHost())
 	if err != nil {
 		return 0, err
 	}

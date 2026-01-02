@@ -173,6 +173,17 @@ JOBS
 			Transport: reg,
 		}
 
+		/*
+			ghClient, err := cliapi.NewRESTClient(cliapi.ClientOptions{
+				Transport: reg,
+			})
+			if err != nil {
+				t.Error(err)
+			}
+
+			tt.opts.client = ghClient
+		*/
+
 		t.Run(tt.name, func(t *testing.T) {
 			err := repositoryDispatchRun(tt.opts)
 

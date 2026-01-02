@@ -6,10 +6,12 @@ import (
 	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
-	cliapi "github.com/cli/cli/v2/api"
+	"github.com/cli/cli/v2/api"
+	"github.com/cli/cli/v2/pkg/cmd/factory"
 	runShared "github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmd/workflow/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
+	cliapi "github.com/cli/go-gh/v2/pkg/api"
 	"github.com/spf13/cobra"
 )
 
@@ -69,13 +71,22 @@ func NewCmdRepository() *cobra.Command {
 			json.Unmarshal(b, &repoClientPayload)
 
 			ios := iostreams.System()
-			ghClient, err := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{})
+			// TODO: add host configuration?
+			ghClient, err := cliapi.DefaultRESTClient()
 			if err != nil {
 				return err
 			}
+
+			f := factory.New("0.0.0")
+			httpClient, err := f.HttpClient()
+			if err != nil {
+				return err
+			}
+
 			dOptions := dispatchOptions{
 				repo:       repo,
-				httpClient: ghClient,
+				client:     ghClient,
+				httpClient: httpClient,
 				io:         ios,
 			}
 
@@ -99,7 +110,7 @@ func NewCmdRepository() *cobra.Command {
 }
 
 func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
-	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
+	ghClient := opts.client
 
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(repositoryDispatchRequest{
@@ -110,14 +121,13 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	var in any
-	err = ghClient.REST(opts.repo.RepoHost(), "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo.RepoFullName()), &buf, &in)
+	err = ghClient.Post(fmt.Sprintf("repos/%s/dispatches", opts.repo.RepoFullName()), &buf, nil)
 	if err != nil {
 		return err
 	}
 
 	var wfs shared.WorkflowsPayload
-	err = ghClient.REST(opts.repo.RepoHost(), "GET", fmt.Sprintf("repos/%s/actions/workflows", opts.repo.RepoFullName()), nil, &wfs)
+	err = ghClient.Get(fmt.Sprintf("repos/%s/actions/workflows", opts.repo.RepoFullName()), wfs)
 	if err != nil {
 		return err
 	}
@@ -130,15 +140,17 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		}
 	}
 
-	runID, err := getRunID(ghClient, opts.repo, "repository_dispatch", workflowID)
+	httpClient := api.NewClientFromHTTP(opts.httpClient)
+
+	runID, err := getRunID(httpClient, opts.repo, "repository_dispatch", workflowID)
 	if err != nil {
 		return err
 	}
 
-	run, err := runShared.GetRun(ghClient, opts.repo, fmt.Sprintf("%d", runID), 0)
+	run, err := runShared.GetRun(httpClient, opts.repo, fmt.Sprintf("%d", runID), 0)
 	if err != nil {
 		return fmt.Errorf("failed to get run: %w", err)
 	}
 
-	return render(opts.io, ghClient, opts.repo, run)
+	return render(opts.io, httpClient, opts.repo, run)
 }
