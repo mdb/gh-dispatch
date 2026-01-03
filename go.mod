@@ -5,9 +5,9 @@ go 1.24
 require (
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/cli/cli/v2 v2.18.1
-	github.com/cli/go-gh v0.1.2
-	github.com/spf13/cobra v1.6.0
-	github.com/stretchr/testify v1.8.1
+	github.com/cli/go-gh v1.2.1
+	github.com/spf13/cobra v1.10.2
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
@@ -20,7 +20,7 @@ require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/henvic/httpretty v0.0.6 // indirect
-	github.com/inconshreveable/mousetrap v1.0.1 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/itchyny/gojq v0.12.8 // indirect
 	github.com/itchyny/timefmt-go v0.1.3 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
@@ -36,7 +36,7 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/shurcooL/githubv4 v0.0.0-20220520033151-0b4e3294ff00 // indirect
 	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/thlib/go-timezone-local v0.0.0-20210907160436-ef149e42d28e // indirect
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
