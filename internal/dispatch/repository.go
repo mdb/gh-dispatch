@@ -69,9 +69,7 @@ func NewCmdRepository() *cobra.Command {
 			json.Unmarshal(b, &repoClientPayload)
 
 			ios := iostreams.System()
-			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{
-				Config: &Conf{},
-			})
+			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{})
 			dOptions := dispatchOptions{
 				repo:       repo,
 				httpClient: ghClient,
@@ -133,7 +131,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		return err
 	}
 
-	run, err := runShared.GetRun(ghClient, opts.repo, fmt.Sprintf("%d", runID))
+	run, err := runShared.GetRun(ghClient, opts.repo, fmt.Sprintf("%d", runID), 0)
 	if err != nil {
 		return fmt.Errorf("failed to get run: %w", err)
 	}
