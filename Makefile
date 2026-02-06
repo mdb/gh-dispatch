@@ -1,6 +1,6 @@
 SOURCE=./...
 GOFMT_FILES?=$$(find . -type f -name '*.go')
-VERSION?=0.1.7
+VERSION?=0.1.8
 
 default: build
 
@@ -9,14 +9,14 @@ version:
 .PHONY: version
 
 tools:
-	go install github.com/goreleaser/goreleaser@v1.11.4
+	go install github.com/goreleaser/goreleaser/v2@v2.13.3
 .PHONY: tools
 
 build: tools
 	goreleaser release \
 		--snapshot \
-		--skip-publish \
-		--rm-dist
+		--skip=publish \
+		--clean
 .PHONY: build
 
 test: vet fmtcheck
