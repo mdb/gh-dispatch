@@ -69,12 +69,12 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *
 // renderRun is largely an emulation of the upstream 'gh run watch' implementation...
 // https://github.com/cli/cli/blob/v2.20.2/pkg/cmd/run/watch/watch.go
 func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, repo *ghRepo, run *shared.Run, annotationCache map[int64][]shared.Annotation) (*shared.Run, error) {
-	run, err := shared.GetRun(client, repo, fmt.Sprintf("%d", run.ID))
+	run, err := shared.GetRun(client, repo, fmt.Sprintf("%d", run.ID), 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get run: %w", err)
 	}
 
-	jobs, err := shared.GetJobs(client, repo, *run)
+	jobs, err := shared.GetJobs(client, repo, run, 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get jobs: %w", err)
 	}
@@ -103,7 +103,7 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, 
 		return nil, fmt.Errorf("failed to get annotations: %w", annotationErr)
 	}
 
-	fmt.Fprintln(out, shared.RenderRunHeader(cs, *run, "", ""))
+	fmt.Fprintln(out, shared.RenderRunHeader(cs, *run, "", "", 0))
 	fmt.Fprintln(out)
 
 	if len(jobs) == 0 {
