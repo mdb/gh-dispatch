@@ -10,6 +10,7 @@ import (
 	runShared "github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmd/workflow/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
+	ghapi "github.com/cli/go-gh/v2/pkg/api"
 	"github.com/spf13/cobra"
 )
 
@@ -74,7 +75,10 @@ func NewCmdWorkflow() *cobra.Command {
 			json.Unmarshal(b, &wInputs)
 
 			ios := iostreams.System()
-			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{})
+			ghClient, err := ghapi.DefaultHTTPClient()
+			if err != nil {
+				return err
+			}
 			dOptions := dispatchOptions{
 				repo:       repo,
 				httpClient: ghClient,
