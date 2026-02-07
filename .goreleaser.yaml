@@ -1,3 +1,4 @@
+version: 2
 project_name: gh-dispatch
 before:
   hooks:
@@ -12,7 +13,5 @@ builds:
       - netbsd
     main: ./cmd/main.go
 archives:
-  - name_template: "{{ .Os }}-{{ .Arch }}"
-    format: binary
-snapshot:
-  name_template: "{{ .Version }}-next"
+  - formats: [binary]
+    name_template: "{{ .Os }}-{{ .Arch }}"

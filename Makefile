@@ -1,6 +1,7 @@
 SOURCE=./...
 GOFMT_FILES?=$$(find . -type f -name '*.go')
-VERSION?=0.1.7
+VERSION?=0.1.8
+GORELEASER=go run github.com/goreleaser/goreleaser/v2@v2.13.3
 
 default: build
 
@@ -8,15 +9,11 @@ version:
 	@echo $(VERSION)
 .PHONY: version
 
-tools:
-	go install github.com/goreleaser/goreleaser@v1.11.4
-.PHONY: tools
-
-build: tools
-	goreleaser release \
+build:
+	$(GORELEASER) release \
 		--snapshot \
-		--skip-publish \
-		--rm-dist
+		--skip=publish \
+		--clean
 .PHONY: build
 
 test: vet fmtcheck
@@ -49,9 +46,9 @@ tag: check-tag
 	git push origin $(VERSION)
 .PHONY: tag
 
-release: tools
-	goreleaser release \
-		--rm-dist
+release:
+	$(GORELEASER) release \
+		--clean
 .PHONY: release
 
 # TODO: dynamically set architecture, which is currently hard-coded to amd64
