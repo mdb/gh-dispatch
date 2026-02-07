@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/go-gh"
+	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/spf13/cobra"
 )
 
@@ -21,9 +21,9 @@ func NewCmdRoot(version string) *cobra.Command {
 	}
 
 	defaultRepo := ""
-	currentRepo, _ := gh.CurrentRepository()
-	if currentRepo != nil {
-		defaultRepo = fmt.Sprintf("%s/%s/%s", currentRepo.Host(), currentRepo.Owner(), currentRepo.Name())
+	currentRepo, err := repository.Current()
+	if err == nil {
+		defaultRepo = fmt.Sprintf("%s/%s/%s", currentRepo.Host, currentRepo.Owner, currentRepo.Name)
 	}
 
 	var repo string

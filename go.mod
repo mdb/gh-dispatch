@@ -5,7 +5,6 @@ go 1.25.5
 require (
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/cli/cli/v2 v2.86.0
-	github.com/cli/go-gh v1.2.1
 	github.com/cli/go-gh/v2 v2.13.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
