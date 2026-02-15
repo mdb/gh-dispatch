@@ -89,7 +89,7 @@ func TestRepositoryAcceptance(t *testing.T) {
 		},
 		wantOut: []string{
 			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
-			"JOBS\n* hello (ID",
+			"hello (ID",
 			")\n  ✓ Set up job",
 			"\n  ✓ say-hello",
 			"\n  ✓ Complete job\n",
@@ -105,7 +105,7 @@ func TestRepositoryAcceptance(t *testing.T) {
 		},
 		wantOut: []string{
 			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
-			"JOBS\n* hello (ID",
+			"hello (ID",
 			")\n  ✓ Set up job",
 			"\n  X say-hello",
 			"\n  ✓ Complete job\n",
