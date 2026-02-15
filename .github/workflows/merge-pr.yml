@@ -1,0 +1,58 @@
+name: Merge PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  merge-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Get PR details
+        id: pr-details
+        shell: bash
+        run: |
+          pr_title="$(gh pr view \
+            "${{ inputs.pr-number }}" \
+            --repo ${{ github.repository }} \
+            --json title \
+            --jq '.title')"
+          echo "pr-title=$pr_title" >> "$GITHUB_OUTPUT"
+          echo "pr-url=$PR_URL" >> "$GITHUB_OUTPUT"
+        env:
+          PR_URL: "https://github.com/${{ github.repository }}/pull/${{ inputs.pr-number }}"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check checks
+        run: gh pr checks "${{ inputs.pr-number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Approve PR
+        run: |
+          gh pr review \
+            "${{ inputs.pr-number }}" \
+            --approve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge PR
+        run: |
+          gh pr merge \
+            "${{ inputs.pr-number }}" \
+            --auto \
+            --body "${{ steps.pr-details.outputs.pr-title }}\n[skip release]" \
+            --merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
