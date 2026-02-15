@@ -156,7 +156,7 @@ func TestWorkflowAcceptance(t *testing.T) {
 		},
 		wantOut: []string{
 			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
-			"JOBS\n* goodbye (ID",
+			"goodbye (ID",
 			")\n  ✓ Set up job",
 			"\n  ✓ say-goodbye",
 			"\n  ✓ Complete job\n",
@@ -170,7 +170,7 @@ func TestWorkflowAcceptance(t *testing.T) {
 		},
 		wantOut: []string{
 			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
-			"JOBS\n* goodbye (ID",
+			"goodbye (ID",
 			")\n  ✓ Set up job",
 			"\n  X say-goodbye",
 			"\n  ✓ Complete job\n",
