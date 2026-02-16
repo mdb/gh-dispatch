@@ -18,7 +18,7 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *
 	out := &bytes.Buffer{}
 	ios.StartAlternateScreenBuffer()
 
-	for run.Status != shared.Completed {
+	for {
 		// Write to a temporary buffer to reduce total number of fetches
 		var err error
 		run, err = renderRun(out, cs, client, repo, run, annotationCache)
@@ -26,7 +26,7 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *
 			return err
 		}
 
-		// If not completed, refresh the screen buffer and write the temporary buffer to stdout
+		// Refresh the screen buffer and write the temporary buffer to stdout
 		ios.RefreshScreen()
 
 		// TODO: should the refresh interval be configurable?
@@ -40,6 +40,10 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *
 		out.Reset()
 		if err != nil {
 			return err
+		}
+
+		if run.Status == shared.Completed {
+			break
 		}
 
 		duration, err := time.ParseDuration(fmt.Sprintf("%ds", interval))
