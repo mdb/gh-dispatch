@@ -126,7 +126,7 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, 
 	return run, nil
 }
 
-func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int64) (int64, error) {
+func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int64, dispatchedAt time.Time) (int64, error) {
 	actor, err := cliapi.CurrentLoginName(client, repo.RepoHost())
 	if err != nil {
 		return 0, err
@@ -139,7 +139,7 @@ func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int6
 		}, 1, func(run shared.Run) bool {
 			// TODO: should this try to match on a branch too?
 			// https://github.com/cli/cli/blob/trunk/pkg/cmd/run/shared/shared.go#L281
-			return run.Status != shared.Completed && run.WorkflowID == workflowID && run.Event == event
+			return run.WorkflowID == workflowID && run.Event == event && !run.CreatedAt.Before(dispatchedAt)
 		})
 		if err != nil {
 			return 0, err
