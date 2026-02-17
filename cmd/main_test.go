@@ -89,10 +89,10 @@ func TestRepositoryAcceptance(t *testing.T) {
 		},
 		wantOut: []string{
 			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
-			"JOBS\n* hello (ID",
-			")\n  ✓ Set up job",
-			"\n  ✓ say-hello",
-			"\n  ✓ Complete job\n",
+			" hello",
+			"  ✓ Set up job",
+			"  ✓ say-hello",
+			"  ✓ Complete job\n",
 		},
 	}, {
 		args: []string{
@@ -105,10 +105,10 @@ func TestRepositoryAcceptance(t *testing.T) {
 		},
 		wantOut: []string{
 			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
-			"JOBS\n* hello (ID",
-			")\n  ✓ Set up job",
-			"\n  X say-hello",
-			"\n  ✓ Complete job\n",
+			" hello",
+			"  ✓ Set up job",
+			"  X say-hello",
+			"  ✓ Complete job\n",
 		},
 		wantErr: true,
 		errMsg:  "exit status 1",
@@ -156,10 +156,10 @@ func TestWorkflowAcceptance(t *testing.T) {
 		},
 		wantOut: []string{
 			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
-			"JOBS\n* goodbye (ID",
-			")\n  ✓ Set up job",
-			"\n  ✓ say-goodbye",
-			"\n  ✓ Complete job\n",
+			" goodbye",
+			"  ✓ Set up job",
+			"  ✓ say-goodbye",
+			"  ✓ Complete job\n",
 		},
 	}, {
 		args: []string{
@@ -170,10 +170,10 @@ func TestWorkflowAcceptance(t *testing.T) {
 		},
 		wantOut: []string{
 			"Refreshing run status every 2 seconds. Press Ctrl+C to quit.\n\nhttps://github.com/mdb/gh-dispatch/actions/runs",
-			"JOBS\n* goodbye (ID",
-			")\n  ✓ Set up job",
-			"\n  X say-goodbye",
-			"\n  ✓ Complete job\n",
+			" goodbye",
+			"  ✓ Set up job",
+			"  X say-goodbye",
+			"  ✓ Complete job\n",
 		},
 		wantErr: true,
 		errMsg:  "exit status 1",

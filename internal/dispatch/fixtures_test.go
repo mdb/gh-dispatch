@@ -31,6 +31,7 @@ var (
 			"name": "foo",
 			"status": "queued",
 			"conclusion": null,
+			"created_at": "2099-01-01T00:00:00Z",
 			"jobs_url": "https://api.github.com/repos/%s/actions/runs/123/jobs"
 		}]
 	}`

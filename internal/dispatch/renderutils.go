@@ -18,7 +18,7 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *
 	out := &bytes.Buffer{}
 	ios.StartAlternateScreenBuffer()
 
-	for run.Status != shared.Completed {
+	for {
 		// Write to a temporary buffer to reduce total number of fetches
 		var err error
 		run, err = renderRun(out, cs, client, repo, run, annotationCache)
@@ -26,7 +26,7 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *
 			return err
 		}
 
-		// If not completed, refresh the screen buffer and write the temporary buffer to stdout
+		// Refresh the screen buffer and write the temporary buffer to stdout
 		ios.RefreshScreen()
 
 		// TODO: should the refresh interval be configurable?
@@ -40,6 +40,10 @@ func render(ios *iostreams.IOStreams, client *cliapi.Client, repo *ghRepo, run *
 		out.Reset()
 		if err != nil {
 			return err
+		}
+
+		if run.Status == shared.Completed {
+			break
 		}
 
 		duration, err := time.ParseDuration(fmt.Sprintf("%ds", interval))
@@ -122,7 +126,7 @@ func renderRun(out io.Writer, cs *iostreams.ColorScheme, client *cliapi.Client, 
 	return run, nil
 }
 
-func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int64) (int64, error) {
+func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int64, dispatchedAt time.Time) (int64, error) {
 	actor, err := cliapi.CurrentLoginName(client, repo.RepoHost())
 	if err != nil {
 		return 0, err
@@ -135,7 +139,7 @@ func getRunID(client *cliapi.Client, repo *ghRepo, event string, workflowID int6
 		}, 1, func(run shared.Run) bool {
 			// TODO: should this try to match on a branch too?
 			// https://github.com/cli/cli/blob/trunk/pkg/cmd/run/shared/shared.go#L281
-			return run.Status != shared.Completed && run.WorkflowID == workflowID && run.Event == event
+			return run.WorkflowID == workflowID && run.Event == event && !run.CreatedAt.Before(dispatchedAt)
 		})
 		if err != nil {
 			return 0, err

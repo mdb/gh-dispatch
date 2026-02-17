@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/MakeNowJust/heredoc"
 	cliapi "github.com/cli/cli/v2/api"
@@ -112,6 +113,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 	}
 
 	var in any
+	dispatchedAt := time.Now()
 	err = ghClient.REST(opts.repo.RepoHost(), "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo.RepoFullName()), &buf, &in)
 	if err != nil {
 		return err
@@ -130,7 +132,7 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		}
 	}
 
-	runID, err := getRunID(ghClient, opts.repo, "repository_dispatch", workflowID)
+	runID, err := getRunID(ghClient, opts.repo, "repository_dispatch", workflowID, dispatchedAt)
 	if err != nil {
 		return err
 	}
