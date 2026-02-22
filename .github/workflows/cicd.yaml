@@ -22,6 +22,7 @@ jobs:
       - name: Install gh dispatch
         run: make install
       - name: Acceptance test
+        if: github.actor != 'dependabot[bot]'
         run: make acc-test
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
