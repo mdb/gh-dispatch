@@ -1,6 +1,6 @@
 SOURCE=./...
 GOFMT_FILES?=$$(find . -type f -name '*.go')
-VERSION?=0.1.9
+VERSION?=0.1.10
 GORELEASER=go run github.com/goreleaser/goreleaser/v2@v2.13.3
 
 default: build
