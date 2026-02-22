@@ -29,6 +29,8 @@ jobs:
   ensure-unpublished-version:
     runs-on: ubuntu-latest
     needs: build-and-test-snapshot
+    permissions:
+      actions: write
     outputs:
       commit-author: ${{ steps.commit-author.outputs.commit-author }}
       commit-message: ${{ steps.commit-message.outputs.commit-message }}
