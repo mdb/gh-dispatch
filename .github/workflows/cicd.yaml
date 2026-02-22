@@ -95,7 +95,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run \
-            merge-pr.yml \
+            merge-pr.yaml \
             --field pr-number="$PR_NUM"
 
   build-and-publish-release:
