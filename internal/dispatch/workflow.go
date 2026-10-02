@@ -7,11 +7,8 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	cliapi "github.com/cli/cli/v2/api"
-	runShared "github.com/cli/cli/v2/pkg/cmd/run/shared"
-	"github.com/cli/cli/v2/pkg/cmd/workflow/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
-	ghapi "github.com/cli/go-gh/v2/pkg/api"
+	"github.com/cli/go-gh/v2/pkg/api"
 	"github.com/spf13/cobra"
 )
 
@@ -75,15 +72,14 @@ func NewCmdWorkflow() *cobra.Command {
 			var wInputs any
 			json.Unmarshal(b, &wInputs)
 
-			ios := iostreams.System()
-			ghClient, err := ghapi.DefaultHTTPClient()
+			client, err := api.NewRESTClient(api.ClientOptions{Host: repo.RepoHost()})
 			if err != nil {
 				return err
 			}
 			dOptions := dispatchOptions{
-				repo:       repo,
-				httpClient: ghClient,
-				io:         ios,
+				repo:   repo,
+				client: client,
+				io:     iostreams.System(),
 			}
 
 			return workflowDispatchRun(&workflowDispatchOptions{
@@ -111,7 +107,7 @@ func NewCmdWorkflow() *cobra.Command {
 }
 
 func workflowDispatchRun(opts *workflowDispatchOptions) error {
-	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
+	client := opts.client
 
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(workflowDispatchRequest{
@@ -124,26 +120,25 @@ func workflowDispatchRun(opts *workflowDispatchOptions) error {
 
 	var in any
 	dispatchedAt := time.Now()
-	err = ghClient.REST(opts.repo.RepoHost(), "POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", opts.repo.RepoFullName(), opts.workflow), &buf, &in)
+	err = client.Post(fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", opts.repo.RepoFullName(), opts.workflow), &buf, &in)
 	if err != nil {
 		return err
 	}
 
-	var wf shared.Workflow
-	err = ghClient.REST(opts.repo.RepoHost(), "GET", fmt.Sprintf("repos/%s/actions/workflows/%s", opts.repo.RepoFullName(), opts.workflow), nil, &wf)
+	wf, err := getWorkflow(client, opts.repo, opts.workflow)
 	if err != nil {
 		return err
 	}
 
-	runID, err := getRunID(ghClient, opts.repo, "workflow_dispatch", wf.ID, dispatchedAt)
+	runID, err := getRunID(client, opts.repo, "workflow_dispatch", wf.ID, dispatchedAt)
 	if err != nil {
 		return err
 	}
 
-	run, err := runShared.GetRun(ghClient, opts.repo, fmt.Sprintf("%d", runID), 0)
+	run, err := getRun(client, opts.repo, runID)
 	if err != nil {
 		return fmt.Errorf("failed to get run: %w", err)
 	}
 
-	return render(opts.io, ghClient, opts.repo, run)
+	return render(opts.io, client, opts.repo, run)
 }
