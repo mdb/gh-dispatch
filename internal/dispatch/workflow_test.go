@@ -3,10 +3,8 @@ package dispatch
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"testing"
 
-	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,87 +17,49 @@ func TestWorkflowDispatchRun(t *testing.T) {
 	repo := ghRepo.RepoFullName()
 	workflow := "workflow.yaml"
 	event := "workflow_dispatch"
+	prefix := fmt.Sprintf("/api/v3/repos/%s", repo)
 
-	createMockRegistry := func(reg *httpmock.Registry, conclusion, jobsResponse string) {
-		reg.Register(
-			httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
-			httpmock.RESTPayload(201, "{}", func(params map[string]any) {
-				assert.Equal(t, map[string]any{
-					"inputs": "{\"foo\": \"bar\"}",
-					"ref":    "",
-				}, params)
-			}))
+	registerHandlers := func(t *testing.T, mux *http.ServeMux, conclusion, jobsResponse string) {
+		mux.HandleFunc("POST "+prefix+"/actions/workflows/"+workflow+"/dispatches", func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, map[string]any{
+				"inputs": "{\"foo\": \"bar\"}",
+				"ref":    "",
+			}, decodeBody(t, r))
+			w.WriteHeader(http.StatusNoContent)
+		})
 
-		reg.Register(
-			httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/workflow.yaml", repo)),
-			httpmock.StringResponse(getWorkflowResponse))
+		mux.HandleFunc("GET "+prefix+"/actions/workflows/"+workflow, respond(getWorkflowResponse))
 
-		reg.Register(
-			httpmock.GraphQL("query UserCurrent{viewer{login}}"),
-			httpmock.StringResponse(currentUserResponse))
+		mux.HandleFunc("GET /api/v3/user", respond(currentUserResponse))
 
-		v := url.Values{}
-		v.Set("per_page", "50")
+		mux.HandleFunc("GET "+prefix+"/actions/workflows/456/runs", func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "mdb", r.URL.Query().Get("actor"))
+			respond(fmt.Sprintf(getWorkflowRunsResponse, event, repo))(w, r)
+		})
 
-		reg.Register(
-			httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows/456/runs", repo), v),
-			httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
-
-		q := url.Values{}
-		q.Set("per_page", "100")
-		q.Set("page", "1")
-
-		reg.Register(
-			httpmock.QueryMatcher("GET", fmt.Sprintf("repos/%s/actions/workflows", repo), q),
-			httpmock.StringResponse(fmt.Sprintf(getWorkflowRunsResponse, event)))
-
-		reg.Register(
-			httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
-			httpmock.StringResponse(getWorkflowResponse))
-
-		reg.Register(
-			httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
-			httpmock.StringResponse(`{
+		mux.HandleFunc("GET "+prefix+"/actions/runs/123", func(w http.ResponseWriter, r *http.Request) {
+			respond(fmt.Sprintf(`{
 				"id": 123,
 				"workflow_id": 456,
-				"event": "workflow_dispatch"
-			}`))
-
-		reg.Register(
-			httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
-			httpmock.StringResponse(getWorkflowResponse))
-
-		reg.Register(
-			httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/workflows/456", repo)),
-			httpmock.StringResponse(getWorkflowResponse))
-
-		reg.Register(
-			httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123", repo)),
-			httpmock.StringResponse(fmt.Sprintf(`{
-				"id": 123,
-				"workflow_id": 456,
-				"event": "workflow_dispatch",
 				"status": "completed",
+				"event": "workflow_dispatch",
 				"conclusion": "%s",
-				"jobs_url": "https://api.github.com/repos/%s/actions/runs/123/jobs"
-			}`, conclusion, repo)))
+				"jobs_url": "https://%s%s/actions/runs/123/jobs"
+			}`, conclusion, r.Host, prefix))(w, r)
+		})
 
-		reg.Register(
-			httpmock.REST("GET", fmt.Sprintf("repos/%s/actions/runs/123/jobs", repo)),
-			httpmock.StringResponse(jobsResponse))
-
-		reg.Register(
-			httpmock.REST("GET", fmt.Sprintf("repos/%s/check-runs/123/annotations", repo)),
-			httpmock.StringResponse("[]"))
+		mux.HandleFunc("GET "+prefix+"/actions/workflows/456", respond(getWorkflowResponse))
+		mux.HandleFunc("GET "+prefix+"/actions/runs/123/jobs", respond(jobsResponse))
+		mux.HandleFunc("GET "+prefix+"/check-runs/123/annotations", respond("[]"))
 	}
 
 	tests := []struct {
-		name      string
-		opts      *workflowDispatchOptions
-		httpStubs func(*httpmock.Registry)
-		wantErr   bool
-		errMsg    string
-		wantOut   string
+		name     string
+		opts     *workflowDispatchOptions
+		handlers func(*testing.T, *http.ServeMux)
+		wantErr  bool
+		errMsg   string
+		wantOut  string
 	}{
 		{
 			name: "successful workflow run",
@@ -107,8 +67,8 @@ func TestWorkflowDispatchRun(t *testing.T) {
 				inputs:   `{"foo": "bar"}`,
 				workflow: workflow,
 			},
-			httpStubs: func(reg *httpmock.Registry) {
-				createMockRegistry(reg, "success", getJobsResponse)
+			handlers: func(t *testing.T, mux *http.ServeMux) {
+				registerHandlers(t, mux, "success", getJobsResponse)
 			},
 			wantOut: `Refreshing run status every 2 seconds. Press Ctrl+C to quit.
 
@@ -128,8 +88,8 @@ JOBS
 				inputs:   `{"foo": "bar"}`,
 				workflow: workflow,
 			},
-			httpStubs: func(reg *httpmock.Registry) {
-				createMockRegistry(reg, "failure", getFailingJobsResponse)
+			handlers: func(t *testing.T, mux *http.ServeMux) {
+				registerHandlers(t, mux, "failure", getFailingJobsResponse)
 			},
 			wantOut: `Refreshing run status every 2 seconds. Press Ctrl+C to quit.
 
@@ -151,10 +111,8 @@ JOBS
 				inputs:   `{"foo": "bar"}`,
 				workflow: workflow,
 			},
-			httpStubs: func(reg *httpmock.Registry) {
-				reg.Register(
-					httpmock.REST("POST", fmt.Sprintf("repos/%s/actions/workflows/%s/dispatches", repo, "workflow.yaml")),
-					httpmock.StringResponse("{"))
+			handlers: func(t *testing.T, mux *http.ServeMux) {
+				mux.HandleFunc("POST "+prefix+"/actions/workflows/"+workflow+"/dispatches", respond("{"))
 			},
 			wantOut: "",
 			wantErr: true,
@@ -162,20 +120,18 @@ JOBS
 		}}
 
 	for _, tt := range tests {
-		reg := &httpmock.Registry{}
-		tt.httpStubs(reg)
-
-		ios, _, stdout, _ := iostreams.Test()
-		ios.SetStdoutTTY(false)
-		ios.SetAlternateScreenBufferEnabled(false)
-
-		tt.opts.repo = ghRepo
-		tt.opts.io = ios
-		tt.opts.httpClient = &http.Client{
-			Transport: reg,
-		}
-
 		t.Run(tt.name, func(t *testing.T) {
+			client, mux := newTestServer(t)
+			tt.handlers(t, mux)
+
+			ios, _, stdout, _ := iostreams.Test()
+			ios.SetStdoutTTY(false)
+			ios.SetAlternateScreenBufferEnabled(false)
+
+			tt.opts.repo = ghRepo
+			tt.opts.io = ios
+			tt.opts.client = client
+
 			err := workflowDispatchRun(tt.opts)
 
 			if tt.wantErr {
@@ -187,8 +143,6 @@ JOBS
 			if got := stdout.String(); got != tt.wantOut {
 				t.Errorf("got stdout:\n%q\nwant:\n%q", got, tt.wantOut)
 			}
-
-			reg.Verify(t)
 		})
 	}
 }

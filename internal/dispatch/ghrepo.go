@@ -23,11 +23,7 @@ func getRepoOption(cmd *cobra.Command) (*ghRepo, error) {
 	return repo, nil
 }
 
-// ghRepo satisfies the ghrepo interface.
-// In the context of gh-dispatch, it enables the reuse of
-// functions packaged in the upstream github.com/cli/cli
-// codebase for rendering GH Actions run output.
-// See github.com/cli/cli/v2/internal/ghrepo.
+// ghRepo identifies a GitHub repository and the host on which it lives.
 type ghRepo struct {
 	Owner string
 	Name  string
