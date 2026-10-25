@@ -2,11 +2,7 @@ package dispatch
 
 var (
 	currentUserResponse string = `{
-		"data": {
-			"viewer": {
-				"login": "mdb"
-			}
-		}
+		"login": "mdb"
 	}`
 
 	getWorkflowsResponse string = `{

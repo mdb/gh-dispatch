@@ -7,11 +7,8 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	cliapi "github.com/cli/cli/v2/api"
-	runShared "github.com/cli/cli/v2/pkg/cmd/run/shared"
-	"github.com/cli/cli/v2/pkg/cmd/workflow/shared"
 	"github.com/cli/cli/v2/pkg/iostreams"
-	ghapi "github.com/cli/go-gh/v2/pkg/api"
+	"github.com/cli/go-gh/v2/pkg/api"
 	"github.com/spf13/cobra"
 )
 
@@ -70,15 +67,14 @@ func NewCmdRepository() *cobra.Command {
 			var repoClientPayload any
 			json.Unmarshal(b, &repoClientPayload)
 
-			ios := iostreams.System()
-			ghClient, err := ghapi.DefaultHTTPClient()
+			client, err := api.NewRESTClient(api.ClientOptions{Host: repo.RepoHost()})
 			if err != nil {
 				return err
 			}
 			dOptions := dispatchOptions{
-				repo:       repo,
-				httpClient: ghClient,
-				io:         ios,
+				repo:   repo,
+				client: client,
+				io:     iostreams.System(),
 			}
 
 			return repositoryDispatchRun(&repositoryDispatchOptions{
@@ -101,7 +97,7 @@ func NewCmdRepository() *cobra.Command {
 }
 
 func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
-	ghClient := cliapi.NewClientFromHTTP(opts.httpClient)
+	client := opts.client
 
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(repositoryDispatchRequest{
@@ -114,12 +110,12 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 
 	var in any
 	dispatchedAt := time.Now()
-	err = ghClient.REST(opts.repo.RepoHost(), "POST", fmt.Sprintf("repos/%s/dispatches", opts.repo.RepoFullName()), &buf, &in)
+	err = client.Post(fmt.Sprintf("repos/%s/dispatches", opts.repo.RepoFullName()), &buf, &in)
 	if err != nil {
 		return err
 	}
 
-	wfs, err := getWorkflows(ghClient, opts.repo.RepoHost(), opts.repo.RepoFullName())
+	wfs, err := getWorkflows(client, opts.repo)
 	if err != nil {
 		return err
 	}
@@ -132,39 +128,15 @@ func repositoryDispatchRun(opts *repositoryDispatchOptions) error {
 		}
 	}
 
-	runID, err := getRunID(ghClient, opts.repo, "repository_dispatch", workflowID, dispatchedAt)
+	runID, err := getRunID(client, opts.repo, "repository_dispatch", workflowID, dispatchedAt)
 	if err != nil {
 		return err
 	}
 
-	run, err := runShared.GetRun(ghClient, opts.repo, fmt.Sprintf("%d", runID), 0)
+	run, err := getRun(client, opts.repo, runID)
 	if err != nil {
 		return fmt.Errorf("failed to get run: %w", err)
 	}
 
-	return render(opts.io, ghClient, opts.repo, run)
-}
-
-func getWorkflows(client *cliapi.Client, repoHost string, repoFullName string) ([]shared.Workflow, error) {
-	perPage := 100
-	page := 1
-	workflows := []shared.Workflow{}
-
-	for {
-		result := shared.WorkflowsPayload{}
-		path := fmt.Sprintf("repos/%s/actions/workflows?per_page=%d&page=%d", repoFullName, perPage, page)
-		err := client.REST(repoHost, "GET", path, nil, &result)
-		if err != nil {
-			return nil, err
-		}
-
-		workflows = append(workflows, result.Workflows...)
-		if len(result.Workflows) < perPage {
-			break
-		}
-
-		page++
-	}
-
-	return workflows, nil
+	return render(opts.io, client, opts.repo, run)
 }
